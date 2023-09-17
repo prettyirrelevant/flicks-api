@@ -15,8 +15,19 @@ Including another URLconf
     2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
 """
 from django.urls import path
+from django.conf import settings
 from django.contrib import admin
+from django.conf.urls.static import static
+
+from utils.views import docs_schema_view
+
+handler400 = 'utils.views.handler_400'
+handler404 = 'utils.views.handler_404'
+handler500 = 'utils.views.handler_500'
 
 urlpatterns = [
     path('admin/', admin.site.urls),
+    path('api/docs', docs_schema_view.with_ui('swagger', cache_timeout=0), name='api-docs'),
 ]
+
+urlpatterns += static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)

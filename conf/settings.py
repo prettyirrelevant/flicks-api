@@ -50,7 +50,7 @@ THIRD_PARTY_APPS = [
     'huey.contrib.djhuey',
 ]
 
-LOCAL_APPS: list[str] = []
+LOCAL_APPS: list[str] = ['apps.accounts']
 
 INSTALLED_APPS = DJANGO_APPS + THIRD_PARTY_APPS + LOCAL_APPS
 
@@ -182,7 +182,7 @@ X_FRAME_OPTIONS = 'DENY'
 REST_FRAMEWORK: dict[str, Any] = {
     'DEFAULT_PERMISSION_CLASSES': ['rest_framework.permissions.IsAuthenticatedOrReadOnly'],
     'DEFAULT_RENDERER_CLASSES': ['rest_framework.renderers.JSONRenderer'],
-    'DEFAULT_AUTHENTICATION_CLASSES': ['bridgebloc.apps.accounts.authentication.Web3Authentication'],
+    'DEFAULT_AUTHENTICATION_CLASSES': ['apps.accounts.authentication.Web3Authentication'],
     'EXCEPTION_HANDLER': 'bridgebloc.common.views.custom_exception_handler',
 }
 if DEBUG:
