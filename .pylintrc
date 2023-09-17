@@ -440,6 +440,7 @@ disable=raw-checker-failed,
         wrong-import-position,
         import-outside-toplevel,
         wrong-import-order,
+        import-error,
         line-too-long
 
 # Enable the message, report, category or checker with the given id(s). You can
