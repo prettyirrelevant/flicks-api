@@ -38,7 +38,7 @@ def custom_exception_handler(exception, context) -> Response | None:
         )
 
     return error_response(
-        message=exception.__class__.__name__,
+        message=str(exception),
         errors=None,
         status_code=response.status_code,
     )
