@@ -8,6 +8,7 @@ from django.http import HttpRequest, JsonResponse
 
 from rest_framework.response import Response
 from rest_framework import status, serializers
+from rest_framework.decorators import api_view
 from rest_framework.permissions import AllowAny
 from rest_framework.exceptions import APIException
 from rest_framework.views import exception_handler
@@ -59,6 +60,11 @@ def handler_500(request: HttpRequest) -> JsonResponse:  # noqa: ARG001
         },
         status=status.HTTP_500_INTERNAL_SERVER_ERROR,
     )
+
+
+@api_view()
+def index_view(request):  # noqa: ARG001
+    return Response(status=status.HTTP_200_OK)
 
 
 class HttpAndHttpsOpenAPISchemaGenerator(OpenAPISchemaGenerator):
