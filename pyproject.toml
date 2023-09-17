@@ -92,7 +92,6 @@ select = [
     "DTZ",
     "EXE",
     "INP",
-    "PT",
     "TCH",
     "PTH",
     "INT",

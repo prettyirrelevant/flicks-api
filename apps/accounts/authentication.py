@@ -20,13 +20,13 @@ class Web3Authentication(TokenAuthentication):
             msg = 'Message: Welcome to Flicks!\nURI: https://flicks.vercel.app'
             signature = Signature.from_string(sig)
             if not signature.verify(public_key, msg.encode()):
-                raise AuthenticationFailed('Signature provided is not valid for the address')
+                raise AuthenticationFailed('Signature provided is not valid for the address.')
 
             account, _ = Account.objects.get_or_create(address=str(public_key), defaults={'address': str(public_key)})
         except Exception as e:  # noqa: BLE001
             if isinstance(e, AuthenticationFailed):
                 raise
 
-            raise AuthenticationFailed(e.__class__.__name__) from e
+            raise AuthenticationFailed(str(e)) from e
 
         return account, None

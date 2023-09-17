@@ -3,11 +3,13 @@ from rest_framework.generics import RetrieveAPIView, get_object_or_404
 from utils.responses import success_response
 
 from .models import Account
+from .permissions import IsAuthenticated
 from .serializers import ProfileSerializer
 
 
 class ProfileAPIView(RetrieveAPIView):
     queryset = Account.objects.get_queryset()
+    permission_classes = (IsAuthenticated,)
     serializer_class = ProfileSerializer
 
     def retrieve(self, request, *args, **kwargs):  # noqa: PLR6301
