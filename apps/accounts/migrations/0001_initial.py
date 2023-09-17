@@ -34,7 +34,7 @@ class Migration(migrations.Migration):
                         verbose_name='address',
                     ),
                 ),
-                ('email', models.EmailField(blank=True, default='', max_length=254, verbose_name='email')),
+                ('email', models.EmailField(blank=True, unique=True, default='', max_length=254, verbose_name='email')),
                 ('moniker', models.CharField(blank=True, default='', max_length=250, verbose_name='moniker')),
                 ('is_suspended', models.BooleanField(blank=True, default=False, verbose_name='is suspended')),
                 ('suspension_reason', models.TextField(default='', verbose_name='suspension reason')),
