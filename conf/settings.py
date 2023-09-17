@@ -257,7 +257,6 @@ SWAGGER_SETTINGS = {
 CIRCLE_API_KEY = env.str('CIRCLE_API_KEY')
 CIRCLE_API_BASE_URL = env.str('CIRCLE_API_BASE_URL')
 CIRCLE_MASTER_WALLET_ID = env.int('CIRCLE_MASTER_WALLET_ID')
-CIRCLE_ATTESTATION_BASE_URL = env.str('CIRCLE_ATTESTATION_BASE_URL')
 
 
 # ==============================================================================
