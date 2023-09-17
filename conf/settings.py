@@ -50,7 +50,7 @@ THIRD_PARTY_APPS = [
     'huey.contrib.djhuey',
 ]
 
-LOCAL_APPS: list[str] = []
+LOCAL_APPS: list[str] = ['apps.accounts']
 
 INSTALLED_APPS = DJANGO_APPS + THIRD_PARTY_APPS + LOCAL_APPS
 
@@ -180,10 +180,10 @@ X_FRAME_OPTIONS = 'DENY'
 # DJANGO REST FRAMEWORK SETTINGS
 # ==============================================================================
 REST_FRAMEWORK: dict[str, Any] = {
-    'DEFAULT_PERMISSION_CLASSES': ['rest_framework.permissions.IsAuthenticatedOrReadOnly'],
+    'DEFAULT_PERMISSION_CLASSES': ['rest_framework.permissions.AllowAny'],
     'DEFAULT_RENDERER_CLASSES': ['rest_framework.renderers.JSONRenderer'],
-    'DEFAULT_AUTHENTICATION_CLASSES': ['bridgebloc.apps.accounts.authentication.Web3Authentication'],
-    'EXCEPTION_HANDLER': 'bridgebloc.common.views.custom_exception_handler',
+    'DEFAULT_AUTHENTICATION_CLASSES': ['apps.accounts.authentication.Web3Authentication'],
+    'EXCEPTION_HANDLER': 'utils.views.custom_exception_handler',
 }
 if DEBUG:
     REST_FRAMEWORK['DEFAULT_RENDERER_CLASSES'].append('rest_framework.renderers.BrowsableAPIRenderer')
@@ -257,7 +257,6 @@ SWAGGER_SETTINGS = {
 CIRCLE_API_KEY = env.str('CIRCLE_API_KEY')
 CIRCLE_API_BASE_URL = env.str('CIRCLE_API_BASE_URL')
 CIRCLE_MASTER_WALLET_ID = env.int('CIRCLE_MASTER_WALLET_ID')
-CIRCLE_ATTESTATION_BASE_URL = env.str('CIRCLE_ATTESTATION_BASE_URL')
 
 
 # ==============================================================================

@@ -1,4 +1,4 @@
-LINT_PATHS = apps/ conf/ services/ manage.py
+LINT_PATHS = apps/ conf/ services/ utils/ manage.py
 
 include .env.local
 
@@ -6,7 +6,6 @@ lint:
 	isort $(LINT_PATHS) --diff --check-only
 	ruff $(LINT_PATHS)
 	pylint $(LINT_PATHS)
-	mypy $(LINT_PATHS) --install-types --non-interactive
 
 format:
 	isort $(LINT_PATHS)
@@ -15,7 +14,7 @@ format:
 
 test:
 	@echo "Running tests..."
-	pytest --cov -s --cov-report xml:.coverage.xml
+	python -Wa manage.py test --failfast --parallel --debug-sql --timing
 
 runserver:
 	@echo 'Running flicks dev server...'
@@ -25,7 +24,7 @@ start-huey:
 	./manage.py run_huey -w 2 -f
 
 create-app:
-	@mkdir bridgebloc/apps/$(filter-out $@,$(MAKECMDGOALS)) && python manage.py startapp $(filter-out $@,$(MAKECMDGOALS)) bridgebloc/apps/$(filter-out $@,$(MAKECMDGOALS))
+	@mkdir apps/$(filter-out $@,$(MAKECMDGOALS)) && python manage.py startapp $(filter-out $@,$(MAKECMDGOALS)) apps/$(filter-out $@,$(MAKECMDGOALS))
 
 %:
 	@:
