@@ -12,7 +12,7 @@ class Account(UUIDModel, TimestampedModel, models.Model):
         max_length=44,
         validators=[MinLengthValidator(32), MaxLengthValidator(44)],
     )
-    email = models.EmailField('email', blank=True, default='')
+    email = models.EmailField('email', unique=True, blank=True, default='')
 
     # This is populated by checking if the user has the address registered to a name service.
     # Bonfida Name Service, Unstoppable Domains, ENS (added Solana address)
