@@ -1,3 +1,3 @@
 from decimal import Decimal
 
-ZERO = Decimal('0.000000')
+ZERO = Decimal('0.00')
