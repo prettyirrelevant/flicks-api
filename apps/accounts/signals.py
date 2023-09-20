@@ -26,6 +26,6 @@ def create_profile(sender, instance, created, **kwargs):  # noqa: ARG001
 
     wallet = Wallet.objects.create(
         account=instance,
-        provider_id=response['data']['1016758320'],
+        provider_id=response['data']['walletId'],
     )
     create_deposit_addresses_for_wallet.schedule((wallet.id,), delay=1)
