@@ -1,0 +1,6 @@
+class AccountSuspensionError(Exception):
+    ...
+
+
+class InsufficientBalanceError(Exception):
+    ...
