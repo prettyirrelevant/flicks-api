@@ -50,7 +50,7 @@ THIRD_PARTY_APPS = [
     'huey.contrib.djhuey',
 ]
 
-LOCAL_APPS: list[str] = ['apps.accounts']
+LOCAL_APPS: list[str] = ['apps.accounts', 'apps.webhooks', 'apps.transactions']
 
 INSTALLED_APPS = DJANGO_APPS + THIRD_PARTY_APPS + LOCAL_APPS
 
@@ -74,6 +74,7 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'apps.webhooks.middlewares.CircleAPINotificationMiddleware',
 ]
 
 

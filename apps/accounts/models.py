@@ -44,7 +44,7 @@ class Wallet(UUIDModel, TimestampedModel, models.Model):
         null=True,
     )
     balance = models.DecimalField('balance', max_digits=20, decimal_places=2, default=ZERO)
-    provider_id = models.CharField('circle provider identifier', max_length=100, blank=False)
+    provider_id = models.CharField('circle provider identifier', unique=True, max_length=100, blank=False)
 
     def __str__(self):
         return str(self.balance)
