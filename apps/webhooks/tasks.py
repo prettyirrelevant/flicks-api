@@ -94,6 +94,9 @@ def handle_transfer_to_master_wallet_webhook(message, webhook):
         webhook.save()
 
     txn = Transaction.objects.get(reference=message['id'])
+    if txn.status in {TransactionStatus.SUCCESSFUL, TransactionStatus.FAILED}:
+        return
+
     txn.metadata = message
     txn.status = TransactionStatus.SUCCESSFUL if message['status'] == 'complete' else TransactionStatus.FAILED
     txn.save()

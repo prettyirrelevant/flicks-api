@@ -68,7 +68,7 @@ def move_funds_to_master_wallet():
             amount=amount,
             account=wallet.account,
             status=TransactionStatus.PENDING,
-            narration=f'Move {amount} to master wallet',
+            narration=f'Transfer {amount} USDC to master wallet',
             tx_type=TransactionType.MOVE_TO_MASTER_WALLET,
             metadata=move_to_master_wallet_response['data'],
             reference=move_to_master_wallet_response['data']['id'],
