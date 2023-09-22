@@ -4,13 +4,13 @@ from utils.responses import success_response
 
 from .models import Account
 from .permissions import IsAuthenticated
-from .serializers import ProfileSerializer
+from .serializers import AccountSerializer
 
 
-class ProfileAPIView(RetrieveAPIView):
-    queryset = Account.objects.get_queryset()
+class MyAccountAPIView(RetrieveAPIView):
+    queryset = Account.objects.select_related('wallet').prefetch_related('wallet__deposit_addresses')
     permission_classes = (IsAuthenticated,)
-    serializer_class = ProfileSerializer
+    serializer_class = AccountSerializer
 
     def retrieve(self, request, *args, **kwargs):  # noqa: PLR6301
         response = super().retrieve(request, *args, **kwargs)

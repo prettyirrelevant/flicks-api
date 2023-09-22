@@ -14,7 +14,7 @@ format:
 
 test:
 	@echo "Running tests..."
-	python -Wa manage.py test --failfast --parallel --debug-sql --timing
+	python -Wa manage.py test --failfast --debug-sql --timing
 
 runserver:
 	@echo 'Running flicks dev server...'
