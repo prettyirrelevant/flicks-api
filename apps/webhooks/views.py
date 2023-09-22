@@ -27,7 +27,7 @@ class WebhookView(APIView):
                     notification_type=WebhookType.SUBSCRIPTION_CONFIRMATION,
                 )
 
-        if data['Type'] == 'Notification':
+        if data['Type'] == 'Notification' and 'transfers' in data['Message']:
             with contextlib.suppress(IntegrityError):
                 Webhook.objects.create(
                     payload=data,
