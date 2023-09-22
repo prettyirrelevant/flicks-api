@@ -139,5 +139,5 @@ known_apps = "apps"
 known_services = "services"
 known_utils = "utils"
 skip_glob = ["**/.venv/*", "**/migrations/*"]
-sections = ["FUTURE", "STDLIB", "THIRDPARTY","DJANGO", "REST_FRAMEWORK", "FIRSTPARTY", "UTILS", "SERVICES", "APPS", "LOCALFOLDER"]
+sections = ["FUTURE", "STDLIB", "THIRDPARTY","DJANGO", "REST_FRAMEWORK", "FIRSTPARTY", "APPS", "SERVICES", "UTILS", "LOCALFOLDER"]
 

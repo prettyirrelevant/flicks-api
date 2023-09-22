@@ -65,6 +65,30 @@ class CircleAPI:
         )
         return response.json()
 
+    def move_to_master_wallet(
+        self,
+        amount: Decimal,
+        master_wallet_id: int,
+        wallet_id: str,
+    ) -> dict[str, Any]:
+        response = self._request(
+            method='POST',
+            endpoint='v1/transfers',
+            data={
+                'idempotencyKey': str(uuid.uuid4()),
+                'source': {
+                    'type': 'wallet',
+                    'id': str(wallet_id),
+                },
+                'destination': {
+                    'type': 'wallet',
+                    'id': str(master_wallet_id),
+                },
+                'amount': {'amount': str(amount), 'currency': 'USD'},
+            },
+        )
+        return response.json()
+
     def create_wallet(self, idempotency_key: uuid.UUID, address: str) -> dict[str, Any]:
         response = self._request(
             method='POST',
