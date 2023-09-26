@@ -1,5 +1,6 @@
 import json
 from unittest.mock import patch
+import requests
 
 from solders.keypair import Keypair
 
@@ -68,7 +69,7 @@ class ContentsTest(TestCase):
         signature = self.keypair.sign_message(self.message)
         files = [
             {"file_name": "test.png", "file_type": "image"},
-            {"file_name": "test1.mp4", "file_type": "video"},
+            {"file_name": "test.mov", "file_type": "video"},
         ]
         response = self.client.post(
             path='/api/contents/get-upload-urls',
@@ -78,3 +79,17 @@ class ContentsTest(TestCase):
         )
         self.assertEqual(response.status_code, 200)
         self.assertEqual(len(response.json()['data'].keys()), len(files))
+
+        # Upload Tests
+        # upload_urls = response.json()['data']
+        # for file in files:
+        #     file_name = file['file_name']
+        #     path = f'staticfiles/test/{file_name}'
+        #     with open(path, 'rb') as f:
+        #         files = {'file': (path, f)}
+        #         upload_url_resp = upload_urls[file_name]
+        #         fields = upload_url_resp['fields']
+        #         ext = file_name.split(".")[1]
+        #         resp = requests.post(upload_url_resp['url'], data=fields, files=files)
+        #         print(resp.status_code)
+        # print(resp.status_code, resp.content, fields)
