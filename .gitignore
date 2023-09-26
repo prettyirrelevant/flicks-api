@@ -204,3 +204,6 @@ cython_debug/
 
 # Django static files
 staticfiles
+
+# Extras
+scratch.py
