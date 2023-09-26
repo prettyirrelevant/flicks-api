@@ -2,7 +2,7 @@ from django.db import models
 
 from utils.models import UUIDModel, TimestampedModel
 
-from .choices import MediaType, MediaUploadStatus
+from .choices import MediaType
 
 
 class Content(UUIDModel, TimestampedModel, models.Model):
@@ -13,7 +13,10 @@ class Content(UUIDModel, TimestampedModel, models.Model):
         related_name='contents',
         blank=False,
     )
-    caption = models.TextField(verbose_name="content caption")
+    caption = models.TextField(verbose_name='content caption')
+
+    def __str__(self):
+        return f'{self.account.address} - {self.caption}'
 
 
 class Media(UUIDModel, TimestampedModel, models.Model):
@@ -22,7 +25,10 @@ class Media(UUIDModel, TimestampedModel, models.Model):
         on_delete=models.CASCADE,
         verbose_name='content',
         related_name='media',
-        blank=False
+        blank=False,
     )
-    s3_key = models.CharField(max_length=100, blank=False, verbose_name="file path on s3")
-    media_type = models.CharField(max_length=20, choices=MediaType.choices, blank=False, verbose_name="media type")
+    s3_key = models.CharField(max_length=100, blank=False, verbose_name='file path on s3')
+    media_type = models.CharField(max_length=20, choices=MediaType.choices, blank=False, verbose_name='media type')
+
+    def __str__(self):
+        return f'{self.media_type} - {self.s3_key}'
