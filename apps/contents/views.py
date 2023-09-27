@@ -8,7 +8,7 @@ from services.s3 import get_pre_signed_upload_url
 
 from utils.responses import error_response, success_response
 
-from .serializers import PreSignedURLSerializer
+from .serializers import PreSignedURLSerializer, CreateContentSerializer
 
 
 class PreSignedURLView(APIView):
@@ -31,3 +31,13 @@ class PreSignedURLView(APIView):
             )
             response_data[data['file_name']] = response
         return success_response(response_data)
+
+
+class ContentView(APIView):
+    permission_classes = (IsAuthenticated,)
+
+    def post(self, request):
+        serializer = CreateContentSerializer(data=self.request.data, context={"request": request})
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+        return success_response({"message": "content created successfully"}, 201)
