@@ -168,6 +168,7 @@ class ContentsTest(TestCase):
         self.assertEqual(livestream.description, data['description'])
         self.assertEqual(livestream.start.strftime("%Y-%m-%d %H:%M:%S"), data['start'])
         self.assertEqual(livestream.duration.seconds, data['duration'])
+
         # Create Livestream [Invalid Start]
         data['start'] = (datetime.datetime.now() - datetime.timedelta(hours=1)).strftime("%Y-%m-%d %H:%M:%S")
         response = self.client.post(
@@ -178,6 +179,7 @@ class ContentsTest(TestCase):
         )
         self.assertEqual(response.status_code, 400)
         self.assertEqual(response.json()['errors']['start'][0], 'invalid start time')
+
         # Update Livestream
         data['start'] = (datetime.datetime.now() + datetime.timedelta(hours=3)).strftime("%Y-%m-%d %H:%M:%S")
         data['title'] = 'Updated Livestream'
@@ -196,3 +198,11 @@ class ContentsTest(TestCase):
         self.assertEqual(livestream.description, data['description'])
         self.assertEqual(livestream.start.strftime("%Y-%m-%d %H:%M:%S"), data['start'])
         self.assertEqual(livestream.duration.seconds, data['duration'])
+
+        # My Livestreams Test
+        response = self.client.get(
+            path='/api/contents/livestream',
+            headers=self.auth_header
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(len(response.json()['data']['results']), 1)

@@ -40,7 +40,7 @@ class ContentView(APIView):
     permission_classes = (IsAuthenticated,)
     paginator = CustomCursorPagination()
 
-    def get_query_set(self):
+    def get_queryset(self):
         return Content.objects.filter(account=self.request.user).prefetch_related('media').order_by('-created_at')
 
     def post(self, request, *args, **kwargs):  # noqa: ARG002
@@ -50,7 +50,7 @@ class ContentView(APIView):
         return success_response({'message': 'content created successfully'}, 201)
 
     def patch(self, request, content_id):
-        qs = self.get_query_set()
+        qs = self.get_queryset()
         content = get_object_or_404(qs, id=content_id)
         serializer = UpdateContentSerializer(instance=content, data=request.data, partial=True)
         serializer.is_valid(raise_exception=True)
@@ -58,7 +58,7 @@ class ContentView(APIView):
         return success_response({'message': 'content updated successfully'})
 
     def get(self, request, *args, **kwargs):  # noqa: ARG002
-        qs = self.get_query_set()
+        qs = self.get_queryset()
         page = self.paginator.paginate_queryset(qs, request, view=self)
         response = self.paginator.get_paginated_response(ContentSerializer(page, many=True).data)
         return success_response(response.data)
@@ -66,6 +66,7 @@ class ContentView(APIView):
 
 class LivestreamView(APIView):
     permission_classes = (IsAuthenticated,)
+    paginator = CustomCursorPagination()
 
     def get_queryset(self):
         return Livestream.objects.filter(account=self.request.user).order_by('-created_at')
@@ -83,4 +84,8 @@ class LivestreamView(APIView):
         serializer.save()
         return success_response({'message': 'livestream updated successfully'})
 
-
+    def get(self, request):
+        qs = self.get_queryset()
+        page = self.paginator.paginate_queryset(qs, request, view=self)
+        response = self.paginator.get_paginated_response(LiveStreamSerializer(page, many=True).data)
+        return success_response(response.data)
