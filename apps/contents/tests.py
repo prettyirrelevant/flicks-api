@@ -1,3 +1,4 @@
+import datetime
 import json
 from unittest.mock import patch
 
@@ -11,7 +12,7 @@ from apps.accounts.tests import WALLET_CREATION_RESPONSE
 
 from utils.mock import MockResponse
 
-from .models import Content
+from .models import Content, Livestream
 
 
 class ContentsTest(TestCase):
@@ -133,3 +134,39 @@ class ContentsTest(TestCase):
         )
         self.assertEqual(response.status_code, 200)
         self.assertEqual(len(response.json()['data']['results']), 1)
+
+    @patch(
+        target='services.circle.CircleAPI._request',
+        return_value=MockResponse(text=WALLET_CREATION_RESPONSE, status_code=201),
+    )
+    def test_livestream_view(self, mock_post):  # noqa: ARG002
+        # Create Livestream
+        data = {
+            'title': 'My First Livestream',
+            'description': 'I just opened a Flicks Account. Join me for my first Livestream.',
+            'start': (datetime.datetime.now() + datetime.timedelta(hours=1)).strftime("%Y-%m-%d %H:%M:%S"),
+            'duration': datetime.timedelta(minutes=20).seconds
+        }
+        response = self.client.post(
+            path='/api/contents/livestream',
+            data=json.dumps(data),
+            content_type='application/json',
+            headers=self.auth_header,
+        )
+        self.assertEqual(response.status_code, 201)
+        livestream = Livestream.objects.get(account__address=self.keypair.pubkey())
+        self.assertEqual(livestream.title, data['title'])
+        self.assertEqual(livestream.description, data['description'])
+        self.assertEqual(livestream.start.strftime("%Y-%m-%d %H:%M:%S"), data['start'])
+        self.assertEqual(livestream.duration.seconds, data['duration'])
+        # Create Livestream [Invalid Start]
+        data['start'] = (datetime.datetime.now() - datetime.timedelta(hours=1)).strftime("%Y-%m-%d %H:%M:%S")
+        response = self.client.post(
+            path=f'/api/contents/livestream',
+            data=json.dumps(data),
+            content_type='application/json',
+            headers=self.auth_header,
+        )
+        # content.refresh_from_db()
+        self.assertEqual(response.status_code, 400)
+        self.assertEqual(response.json()['errors']['start'][0], 'invalid start time')

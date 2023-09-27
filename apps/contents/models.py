@@ -1,6 +1,9 @@
+import datetime
+
 import boto3
 
 from django.db import models
+from django.core.validators import MaxValueValidator, MinValueValidator
 from django.conf import settings
 
 from utils.models import UUIDModel, TimestampedModel
@@ -48,3 +51,26 @@ class Media(UUIDModel, TimestampedModel, models.Model):
             Params={'Bucket': settings.BUCKET_NAME, 'Key': self.s3_key},
             ExpiresIn=settings.PRESIGNED_URL_EXPIRATION,
         )
+
+
+class Livestream(UUIDModel, TimestampedModel, models.Model):
+    account = models.ForeignKey(
+        to='accounts.Account',
+        verbose_name='account',
+        on_delete=models.CASCADE,
+        related_name='livestream',
+        blank=False,
+    )
+    title = models.CharField(max_length=50, blank=False, verbose_name='title')
+    description = models.TextField(verbose_name='description')
+    start = models.DateTimeField(verbose_name='start timestamp')
+    duration = models.DurationField(
+        verbose_name='livestream duration',
+        validators=[
+            MinValueValidator(datetime.timedelta(minutes=10)),
+            MaxValueValidator(datetime.timedelta(minutes=30)),
+        ],
+    )
+
+    def __str__(self):
+        return f"Livestream: {self.title}"

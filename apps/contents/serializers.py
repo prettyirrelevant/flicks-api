@@ -1,10 +1,11 @@
 from django.conf import settings
 from django.db import transaction
+from django.utils import timezone
 
 from rest_framework import serializers
 
 from .choices import MediaType
-from .models import Media, Content
+from .models import Media, Content, Livestream
 
 
 class PreSignedURLSerializer(serializers.Serializer):
@@ -66,3 +67,17 @@ class ContentSerializer(serializers.ModelSerializer):
     class Meta:
         model = Content
         fields = ('id', 'caption', 'media', 'created_at', 'updated_at')
+
+
+class CreateLivestreamSerializer(serializers.ModelSerializer):
+
+    def validate(self, attrs):
+        if attrs['start'] <= timezone.now():
+            raise serializers.ValidationError(detail={'start': 'invalid start time'})
+        attrs['account'] = self.context['request'].user
+        return attrs
+
+    class Meta:
+        model = Livestream
+        fields = ('id', 'account', 'title', 'description', 'start', 'duration')
+        read_only_fields = ('id', 'account',)

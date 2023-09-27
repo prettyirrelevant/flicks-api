@@ -11,7 +11,7 @@ from utils.pagination import CustomCursorPagination
 from utils.responses import error_response, success_response
 
 from .models import Content
-from .serializers import ContentSerializer, PreSignedURLSerializer, CreateContentSerializer, UpdateContentSerializer
+from .serializers import ContentSerializer, PreSignedURLSerializer, CreateContentSerializer, UpdateContentSerializer, CreateLivestreamSerializer
 
 
 class PreSignedURLView(APIView):
@@ -62,3 +62,13 @@ class ContentView(APIView):
         page = self.paginator.paginate_queryset(qs, request, view=self)
         response = self.paginator.get_paginated_response(ContentSerializer(page, many=True).data)
         return success_response(response.data)
+
+
+class LivestreamView(APIView):
+    permission_classes = (IsAuthenticated,)
+
+    def post(self, request, *args, **kwargs):  # noqa: ARG002
+        serializer = CreateLivestreamSerializer(data=self.request.data, context={'request': request})
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+        return success_response({"message": "livestream created successfully"}, 201)
