@@ -19,7 +19,8 @@ class PreSignedURLSerializer(serializers.Serializer):
 class MediaSerializer(serializers.ModelSerializer):
     class Meta:
         model = Media
-        fields = ("s3_key", "media_type")
+        fields = ("s3_key", "media_type", "url")
+        read_only_fields = ("url",)
 
 
 class CreateContentSerializer(serializers.Serializer):
@@ -38,3 +39,21 @@ class CreateContentSerializer(serializers.Serializer):
                     s3_key=media['s3_key']
                 )
         return content
+
+
+class UpdateContentSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Content
+        fields = ("caption",)
+
+
+class ContentSerializer(serializers.ModelSerializer):
+    media = serializers.SerializerMethodField()
+
+    def get_media(self, obj):
+        qs = obj.media.all()
+        return MediaSerializer(qs, many=True).data
+
+    class Meta:
+        model = Content
+        fields = ("id", "caption", "media", "created_at", "updated_at")

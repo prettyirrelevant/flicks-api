@@ -1,14 +1,17 @@
 from django.conf import settings
 
 from rest_framework.views import APIView
+from rest_framework.generics import get_object_or_404
 
+from .models import Content
 from apps.accounts.permissions import IsAuthenticated
 
 from services.s3 import get_pre_signed_upload_url
 
 from utils.responses import error_response, success_response
+from utils.pagination import CustomCursorPagination
 
-from .serializers import PreSignedURLSerializer, CreateContentSerializer
+from .serializers import PreSignedURLSerializer, CreateContentSerializer, UpdateContentSerializer, ContentSerializer
 
 
 class PreSignedURLView(APIView):
@@ -35,9 +38,27 @@ class PreSignedURLView(APIView):
 
 class ContentView(APIView):
     permission_classes = (IsAuthenticated,)
+    paginator = CustomCursorPagination()
 
-    def post(self, request):
+    def get_query_set(self):
+        return Content.objects.filter(account=self.request.user).prefetch_related('media').order_by('-created_at')
+
+    def post(self, request, *args, **kwargs):
         serializer = CreateContentSerializer(data=self.request.data, context={"request": request})
         serializer.is_valid(raise_exception=True)
         serializer.save()
         return success_response({"message": "content created successfully"}, 201)
+
+    def patch(self, request, content_id):
+        qs = self.get_query_set()
+        content = get_object_or_404(qs, id=content_id)
+        serializer = UpdateContentSerializer(instance=content, data=request.data)
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+        return success_response({"message": "content updated successfully"})
+
+    def get(self, request, *args, **kwargs):
+        qs = self.get_query_set()
+        page = self.paginator.paginate_queryset(qs, request, view=self)
+        response = self.paginator.get_paginated_response(ContentSerializer(page, many=True).data)
+        return success_response(response.data)
