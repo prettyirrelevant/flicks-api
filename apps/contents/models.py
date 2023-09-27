@@ -3,8 +3,8 @@ import datetime
 import boto3
 
 from django.db import models
-from django.core.validators import MaxValueValidator, MinValueValidator
 from django.conf import settings
+from django.core.validators import MaxValueValidator, MinValueValidator
 
 from utils.models import UUIDModel, TimestampedModel
 
@@ -73,4 +73,4 @@ class Livestream(UUIDModel, TimestampedModel, models.Model):
     )
 
     def __str__(self):
-        return f"Livestream: {self.title}"
+        return f'Livestream: {self.title}'

@@ -11,7 +11,13 @@ from utils.pagination import CustomCursorPagination
 from utils.responses import error_response, success_response
 
 from .models import Content, Livestream
-from .serializers import ContentSerializer, PreSignedURLSerializer, CreateContentSerializer, UpdateContentSerializer, LiveStreamSerializer
+from .serializers import (
+    ContentSerializer,
+    LiveStreamSerializer,
+    PreSignedURLSerializer,
+    CreateContentSerializer,
+    UpdateContentSerializer,
+)
 
 
 class PreSignedURLView(APIView):
@@ -75,11 +81,16 @@ class LivestreamView(APIView):
         serializer = LiveStreamSerializer(data=self.request.data, context={'request': request})
         serializer.is_valid(raise_exception=True)
         serializer.save()
-        return success_response({"message": "livestream created successfully"}, 201)
+        return success_response({'message': 'livestream created successfully'}, 201)
 
-    def patch(self, request, stream_id):  # noqa: ARG002
+    def patch(self, request, stream_id):
         stream = get_object_or_404(self.get_queryset(), id=stream_id)
-        serializer = LiveStreamSerializer(instance=stream, data=request.data, partial=True, context={'request': request})
+        serializer = LiveStreamSerializer(
+            instance=stream,
+            data=request.data,
+            partial=True,
+            context={'request': request},
+        )
         serializer.is_valid(raise_exception=True)
         serializer.save()
         return success_response({'message': 'livestream updated successfully'})

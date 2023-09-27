@@ -70,7 +70,6 @@ class ContentSerializer(serializers.ModelSerializer):
 
 
 class LiveStreamSerializer(serializers.ModelSerializer):
-
     def validate(self, attrs):
         if attrs['start'] <= timezone.now():
             raise serializers.ValidationError(detail={'start': 'invalid start time'})
@@ -80,4 +79,4 @@ class LiveStreamSerializer(serializers.ModelSerializer):
     class Meta:
         model = Livestream
         fields = ('id', 'account', 'title', 'description', 'start', 'duration')
-        read_only_fields = ('id', 'account',)
+        read_only_fields = ('id', 'account')

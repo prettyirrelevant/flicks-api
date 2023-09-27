@@ -1,11 +1,12 @@
-import datetime
 import json
-from unittest.mock import patch
 import uuid
+import datetime
+from unittest.mock import patch
 
 from solders.keypair import Keypair
 
 from django.test import TestCase
+from django.utils import timezone
 
 from rest_framework.test import APIClient
 
@@ -153,8 +154,8 @@ class ContentsTest(TestCase):
         data = {
             'title': 'My First Livestream',
             'description': 'I just opened a Flicks Account. Join me for my first Livestream.',
-            'start': (datetime.datetime.now() + datetime.timedelta(hours=1)).strftime("%Y-%m-%d %H:%M:%S"),
-            'duration': datetime.timedelta(minutes=20).seconds
+            'start': (timezone.now() + datetime.timedelta(hours=1)).strftime('%Y-%m-%d %H:%M:%S'),
+            'duration': datetime.timedelta(minutes=20).seconds,
         }
         response = self.client.post(
             path='/api/contents/livestream',
@@ -166,13 +167,13 @@ class ContentsTest(TestCase):
         livestream = Livestream.objects.get(account__address=self.keypair.pubkey())
         self.assertEqual(livestream.title, data['title'])
         self.assertEqual(livestream.description, data['description'])
-        self.assertEqual(livestream.start.strftime("%Y-%m-%d %H:%M:%S"), data['start'])
+        self.assertEqual(livestream.start.strftime('%Y-%m-%d %H:%M:%S'), data['start'])
         self.assertEqual(livestream.duration.seconds, data['duration'])
 
         # Create Livestream [Invalid Start]
-        data['start'] = (datetime.datetime.now() - datetime.timedelta(hours=1)).strftime("%Y-%m-%d %H:%M:%S")
+        data['start'] = (timezone.now() - datetime.timedelta(hours=1)).strftime('%Y-%m-%d %H:%M:%S')
         response = self.client.post(
-            path=f'/api/contents/livestream',
+            path='/api/contents/livestream',
             data=json.dumps(data),
             content_type='application/json',
             headers=self.auth_header,
@@ -181,7 +182,7 @@ class ContentsTest(TestCase):
         self.assertEqual(response.json()['errors']['start'][0], 'invalid start time')
 
         # Update Livestream
-        data['start'] = (datetime.datetime.now() + datetime.timedelta(hours=3)).strftime("%Y-%m-%d %H:%M:%S")
+        data['start'] = (timezone.now() + datetime.timedelta(hours=3)).strftime('%Y-%m-%d %H:%M:%S')
         data['title'] = 'Updated Livestream'
         data['description'] = 'Updated Description'
         data['duration'] = datetime.timedelta(minutes=15).seconds
@@ -189,20 +190,20 @@ class ContentsTest(TestCase):
             path=f'/api/contents/livestream/{livestream.id}',
             data=json.dumps(data),
             content_type='application/json',
-            headers=self.auth_header
+            headers=self.auth_header,
         )
         livestream.refresh_from_db()
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.json()['data']['message'], 'livestream updated successfully')
         self.assertEqual(livestream.title, data['title'])
         self.assertEqual(livestream.description, data['description'])
-        self.assertEqual(livestream.start.strftime("%Y-%m-%d %H:%M:%S"), data['start'])
+        self.assertEqual(livestream.start.strftime('%Y-%m-%d %H:%M:%S'), data['start'])
         self.assertEqual(livestream.duration.seconds, data['duration'])
 
         # My Livestreams Test
         response = self.client.get(
             path='/api/contents/livestream',
-            headers=self.auth_header
+            headers=self.auth_header,
         )
         self.assertEqual(response.status_code, 200)
         self.assertEqual(len(response.json()['data']['results']), 1)
