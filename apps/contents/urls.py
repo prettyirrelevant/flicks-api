@@ -1,6 +1,6 @@
 from django.urls import path
 
-from .views import PreSignedURLView, ContentView
+from .views import ContentView, PreSignedURLView
 
 urlpatterns = [
     path('contents', ContentView.as_view(), name='content'),

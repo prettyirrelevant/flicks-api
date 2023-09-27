@@ -1,8 +1,10 @@
-from rest_framework import serializers
-from .models import Media, Content
 from django.conf import settings
-from .choices import MediaType
 from django.db import transaction
+
+from rest_framework import serializers
+
+from .choices import MediaType
+from .models import Media, Content
 
 
 class PreSignedURLSerializer(serializers.Serializer):
@@ -19,41 +21,48 @@ class PreSignedURLSerializer(serializers.Serializer):
 class MediaSerializer(serializers.ModelSerializer):
     class Meta:
         model = Media
-        fields = ("s3_key", "media_type", "url")
-        read_only_fields = ("url",)
+        fields = ('s3_key', 'media_type', 'url')
+        read_only_fields = ('url',)
 
 
 class CreateContentSerializer(serializers.Serializer):
     caption = serializers.CharField()
-    media = serializers.ListField(child=MediaSerializer(), allow_empty=False, max_length=settings.MAX_FILE_UPLOAD_PER_REQUEST)
+    media = serializers.ListField(
+        child=MediaSerializer(),
+        allow_empty=False,
+        max_length=settings.MAX_FILE_UPLOAD_PER_REQUEST,
+    )
 
     def create(self, validated_data):
         account = self.context['request'].user
         content = None
         with transaction.atomic():
-            content = Content.objects.create(account=account, caption=validated_data["caption"])
+            content = Content.objects.create(account=account, caption=validated_data['caption'])
             for media in validated_data['media']:
                 Media.objects.create(
                     content=content,
                     media_type=media['media_type'],
-                    s3_key=media['s3_key']
+                    s3_key=media['s3_key'],
                 )
         return content
+
+    def update(self, instance, validated_data):
+        ...
 
 
 class UpdateContentSerializer(serializers.ModelSerializer):
     class Meta:
         model = Content
-        fields = ("caption",)
+        fields = ('caption',)
 
 
 class ContentSerializer(serializers.ModelSerializer):
     media = serializers.SerializerMethodField()
 
-    def get_media(self, obj):
+    def get_media(self, obj):  # noqa: PLR6301
         qs = obj.media.all()
         return MediaSerializer(qs, many=True).data
 
     class Meta:
         model = Content
-        fields = ("id", "caption", "media", "created_at", "updated_at")
+        fields = ('id', 'caption', 'media', 'created_at', 'updated_at')
