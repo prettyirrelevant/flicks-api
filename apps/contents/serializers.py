@@ -69,7 +69,7 @@ class ContentSerializer(serializers.ModelSerializer):
         fields = ('id', 'caption', 'media', 'created_at', 'updated_at')
 
 
-class CreateLivestreamSerializer(serializers.ModelSerializer):
+class LiveStreamSerializer(serializers.ModelSerializer):
 
     def validate(self, attrs):
         if attrs['start'] <= timezone.now():

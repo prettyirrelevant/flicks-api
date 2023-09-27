@@ -1,6 +1,7 @@
 import datetime
 import json
 from unittest.mock import patch
+import uuid
 
 from solders.keypair import Keypair
 
@@ -127,6 +128,14 @@ class ContentsTest(TestCase):
         content.refresh_from_db()
         self.assertEqual(content.caption, data['caption'])
         self.assertEqual(response.status_code, 200)
+        # Update Content Not Found
+        response = self.client.patch(
+            path=f'/api/contents/{uuid.uuid4()}',
+            data=json.dumps(data),
+            content_type='application/json',
+            headers=self.auth_header,
+        )
+        self.assertEqual(response.status_code, 404)
         # Fetch my Content View
         response = self.client.get(
             path='/api/contents',
@@ -167,6 +176,23 @@ class ContentsTest(TestCase):
             content_type='application/json',
             headers=self.auth_header,
         )
-        # content.refresh_from_db()
         self.assertEqual(response.status_code, 400)
         self.assertEqual(response.json()['errors']['start'][0], 'invalid start time')
+        # Update Livestream
+        data['start'] = (datetime.datetime.now() + datetime.timedelta(hours=3)).strftime("%Y-%m-%d %H:%M:%S")
+        data['title'] = 'Updated Livestream'
+        data['description'] = 'Updated Description'
+        data['duration'] = datetime.timedelta(minutes=15).seconds
+        response = self.client.patch(
+            path=f'/api/contents/livestream/{livestream.id}',
+            data=json.dumps(data),
+            content_type='application/json',
+            headers=self.auth_header
+        )
+        livestream.refresh_from_db()
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json()['data']['message'], 'livestream updated successfully')
+        self.assertEqual(livestream.title, data['title'])
+        self.assertEqual(livestream.description, data['description'])
+        self.assertEqual(livestream.start.strftime("%Y-%m-%d %H:%M:%S"), data['start'])
+        self.assertEqual(livestream.duration.seconds, data['duration'])

@@ -10,8 +10,8 @@ from services.s3 import get_pre_signed_upload_url
 from utils.pagination import CustomCursorPagination
 from utils.responses import error_response, success_response
 
-from .models import Content
-from .serializers import ContentSerializer, PreSignedURLSerializer, CreateContentSerializer, UpdateContentSerializer, CreateLivestreamSerializer
+from .models import Content, Livestream
+from .serializers import ContentSerializer, PreSignedURLSerializer, CreateContentSerializer, UpdateContentSerializer, LiveStreamSerializer
 
 
 class PreSignedURLView(APIView):
@@ -52,7 +52,7 @@ class ContentView(APIView):
     def patch(self, request, content_id):
         qs = self.get_query_set()
         content = get_object_or_404(qs, id=content_id)
-        serializer = UpdateContentSerializer(instance=content, data=request.data)
+        serializer = UpdateContentSerializer(instance=content, data=request.data, partial=True)
         serializer.is_valid(raise_exception=True)
         serializer.save()
         return success_response({'message': 'content updated successfully'})
@@ -67,8 +67,20 @@ class ContentView(APIView):
 class LivestreamView(APIView):
     permission_classes = (IsAuthenticated,)
 
+    def get_queryset(self):
+        return Livestream.objects.filter(account=self.request.user).order_by('-created_at')
+
     def post(self, request, *args, **kwargs):  # noqa: ARG002
-        serializer = CreateLivestreamSerializer(data=self.request.data, context={'request': request})
+        serializer = LiveStreamSerializer(data=self.request.data, context={'request': request})
         serializer.is_valid(raise_exception=True)
         serializer.save()
         return success_response({"message": "livestream created successfully"}, 201)
+
+    def patch(self, request, stream_id):  # noqa: ARG002
+        stream = get_object_or_404(self.get_queryset(), id=stream_id)
+        serializer = LiveStreamSerializer(instance=stream, data=request.data, partial=True, context={'request': request})
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+        return success_response({'message': 'livestream updated successfully'})
+
+
