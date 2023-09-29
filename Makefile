@@ -9,8 +9,8 @@ lint:
 
 format:
 	isort $(LINT_PATHS)
-	ruff $(LINT_PATHS) --fix
 	black $(LINT_PATHS)
+	ruff $(LINT_PATHS) --fix
 
 test:
 	@echo "Running tests..."
