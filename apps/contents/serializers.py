@@ -36,7 +36,6 @@ class CreateContentSerializer(serializers.Serializer):
 
     def create(self, validated_data):
         account = self.context['request'].user
-        content = None
         with transaction.atomic():
             content = Content.objects.create(account=account, caption=validated_data['caption'])
             for media in validated_data['media']:
@@ -45,7 +44,7 @@ class CreateContentSerializer(serializers.Serializer):
                     media_type=media['media_type'],
                     s3_key=media['s3_key'],
                 )
-        return content
+            return content
 
     def update(self, instance, validated_data):
         ...
@@ -71,7 +70,7 @@ class ContentSerializer(serializers.ModelSerializer):
 
 class LiveStreamSerializer(serializers.ModelSerializer):
     def validate(self, attrs):
-        if attrs['start'] <= timezone.now():
+        if attrs['start'] < timezone.now():
             raise serializers.ValidationError(detail={'start': 'invalid start time'})
         attrs['account'] = self.context['request'].user
         return attrs

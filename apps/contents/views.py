@@ -1,7 +1,8 @@
 from django.conf import settings
 
 from rest_framework.views import APIView
-from rest_framework.generics import get_object_or_404
+from rest_framework.mixins import ListModelMixin
+from rest_framework.generics import GenericAPIView, get_object_or_404
 
 from apps.accounts.permissions import IsAuthenticated
 
@@ -43,15 +44,22 @@ class PreSignedURLView(APIView):
         return success_response(response_data)
 
 
-class ContentView(APIView):
+class ContentView(GenericAPIView, ListModelMixin):
     permission_classes = (IsAuthenticated,)
-    paginator = CustomCursorPagination()
+    pagination_class = CustomCursorPagination
+
+    def get_serializer_class(self):
+        if self.request.method == 'POST':
+            return CreateContentSerializer
+        if self.request.method == 'PATCH':
+            return UpdateContentSerializer
+        return ContentSerializer
 
     def get_queryset(self):
         return Content.objects.filter(account=self.request.user).prefetch_related('media').order_by('-created_at')
 
     def post(self, request, *args, **kwargs):  # noqa: ARG002
-        serializer = CreateContentSerializer(data=self.request.data, context={'request': request})
+        serializer = self.get_serializer_class()(data=self.request.data, context={'request': request})
         serializer.is_valid(raise_exception=True)
         serializer.save()
         return success_response({'message': 'content created successfully'}, 201)
@@ -59,34 +67,33 @@ class ContentView(APIView):
     def patch(self, request, content_id):
         qs = self.get_queryset()
         content = get_object_or_404(qs, id=content_id)
-        serializer = UpdateContentSerializer(instance=content, data=request.data, partial=True)
+        serializer = self.get_serializer_class()(instance=content, data=request.data, partial=True)
         serializer.is_valid(raise_exception=True)
         serializer.save()
         return success_response({'message': 'content updated successfully'})
 
-    def get(self, request, *args, **kwargs):  # noqa: ARG002
-        qs = self.get_queryset()
-        page = self.paginator.paginate_queryset(qs, request, view=self)
-        response = self.paginator.get_paginated_response(ContentSerializer(page, many=True).data)
+    def get(self, request, *args, **kwargs):
+        response = self.list(request, *args, **kwargs)
         return success_response(response.data)
 
 
-class LivestreamView(APIView):
+class LivestreamView(GenericAPIView, ListModelMixin):
     permission_classes = (IsAuthenticated,)
-    paginator = CustomCursorPagination()
+    pagination_class = CustomCursorPagination
+    serializer_class = LiveStreamSerializer
 
     def get_queryset(self):
         return Livestream.objects.filter(account=self.request.user).order_by('-created_at')
 
     def post(self, request, *args, **kwargs):  # noqa: ARG002
-        serializer = LiveStreamSerializer(data=self.request.data, context={'request': request})
+        serializer = self.serializer_class(data=self.request.data, context={'request': request})
         serializer.is_valid(raise_exception=True)
         serializer.save()
         return success_response({'message': 'livestream created successfully'}, 201)
 
     def patch(self, request, stream_id):
         stream = get_object_or_404(self.get_queryset(), id=stream_id)
-        serializer = LiveStreamSerializer(
+        serializer = self.serializer_class(
             instance=stream,
             data=request.data,
             partial=True,
@@ -96,10 +103,8 @@ class LivestreamView(APIView):
         serializer.save()
         return success_response({'message': 'livestream updated successfully'})
 
-    def get(self, request):
-        qs = self.get_queryset()
-        page = self.paginator.paginate_queryset(qs, request, view=self)
-        response = self.paginator.get_paginated_response(LiveStreamSerializer(page, many=True).data)
+    def get(self, request, *args, **kwargs):
+        response = self.list(request, *args, **kwargs)
         return success_response(response.data)
 
 
