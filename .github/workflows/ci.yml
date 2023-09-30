@@ -22,6 +22,8 @@ env:
   BUCKET_NAME: ${{ secrets.BUCKET_NAME }}
   MAX_FILE_UPLOAD_PER_REQUEST: ${{ secrets.MAX_FILE_UPLOAD_PER_REQUEST }}
   PRESIGNED_URL_EXPIRATION: ${{ secrets.PRESIGNED_URL_EXPIRATION }}
+  AGORA_APP_ID: ${{ secrets.AGORA_APP_ID }}
+  AGORA_APP_CERTIFICATE: ${{ secrets.AGORA_APP_CERTIFICATE }}
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.head_ref || github.ref }}
