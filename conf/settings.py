@@ -268,6 +268,12 @@ BUCKET_NAME = env.str('BUCKET_NAME')
 MAX_FILE_UPLOAD_PER_REQUEST = env.int('MAX_FILE_UPLOAD_PER_REQUEST')
 PRESIGNED_URL_EXPIRATION = env.int('PRESIGNED_URL_EXPIRATION')
 
+# =======================================
+# FILE UPLOAD SETTINGS
+# =======================================
+AGORA_APP_ID = env.str('AGORA_APP_ID')
+AGORA_APP_CERTIFICATE = env.str('AGORA_APP_CERTIFICATE')
+
 
 # ==============================================================================
 # LOGGING SETTINGS

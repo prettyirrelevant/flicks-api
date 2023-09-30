@@ -6,6 +6,7 @@ from rest_framework.generics import get_object_or_404
 from apps.accounts.permissions import IsAuthenticated
 
 from services.s3 import get_pre_signed_upload_url
+from services.agora.token_builder import Role, RtcTokenBuilder
 
 from utils.pagination import CustomCursorPagination
 from utils.responses import error_response, success_response
@@ -100,3 +101,23 @@ class LivestreamView(APIView):
         page = self.paginator.paginate_queryset(qs, request, view=self)
         response = self.paginator.get_paginated_response(LiveStreamSerializer(page, many=True).data)
         return success_response(response.data)
+
+
+class JoinLivestreamView(APIView):
+    permission_classes = (IsAuthenticated,)
+
+    def get(self, request, stream_id):
+        stream = get_object_or_404(Livestream.objects.all(), id=stream_id)
+        role = Role.PUBLISHER if stream.account == self.request.user else Role.SUBSCRIBER
+        token_builder = RtcTokenBuilder()
+        token_expiration = (stream.start + stream.duration).timestamp()
+        token = token_builder.build_token_with_user_account(
+            settings.AGORA_APP_ID,
+            settings.AGORA_APP_CERTIFICATE,
+            str(stream.id),
+            request.user.address,
+            role,
+            token_expiration,
+            token_expiration,
+        )
+        return success_response({'token': token, 'channel_name': str(stream.id), 'user_account': request.user.address})

@@ -207,3 +207,10 @@ class ContentsTest(TestCase):
         )
         self.assertEqual(response.status_code, 200)
         self.assertEqual(len(response.json()['data']['results']), 1)
+
+        # Join Livestream Test
+        response = self.client.get(path=f'/api/contents/livestream/{livestream.id}/join', headers=self.auth_header)
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json()['data']['user_account'], str(self.keypair.pubkey()))
+        self.assertEqual(response.json()['data']['channel_name'], str(livestream.id))
+        self.assertIn('token', response.json()['data'])

@@ -114,6 +114,7 @@ ignore = ["TRY003", "G004", "TRY301"]
 [tool.ruff.per-file-ignores]
 "**/test_**.py" = ["S101"]
 "conf/settings.py" = ["E402"]
+"services/agora/**.py" = ["PLR0913", "PLR6301"]
 
 [tool.ruff.flake8-quotes]
 inline-quotes = "single"
