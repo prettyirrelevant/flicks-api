@@ -102,8 +102,16 @@ class ContentsTest(TestCase):
         data = {
             'caption': 'My First post',
             'media': [
-                {'media_type': 'image', 's3_key': 'images/8LnFdWY5KjemEPqXVfco4h7RZubFds9iM7DPpinWZCnG/test.png'},
-                {'media_type': 'video', 's3_key': 'videos/vYBRhWTQPJXByU3ED3SpUWSqR3RnJ7eT1vJ6Ckfbuqq/test.mov'},
+                {
+                    'media_type': 'image',
+                    's3_key': 'images/8LnFdWY5KjemEPqXVfco4h7RZubFds9iM7DPpinWZCnG/test.png',
+                    'blur_hash': 'hashyyy',
+                },
+                {
+                    'media_type': 'video',
+                    's3_key': 'videos/vYBRhWTQPJXByU3ED3SpUWSqR3RnJ7eT1vJ6Ckfbuqq/test.mov',
+                    'blur_hash': 'hashyyy',
+                },
             ],
         }
         response = self.client.post(

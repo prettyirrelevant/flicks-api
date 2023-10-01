@@ -22,7 +22,7 @@ class PreSignedURLSerializer(serializers.Serializer):
 class MediaSerializer(serializers.ModelSerializer):
     class Meta:
         model = Media
-        fields = ('s3_key', 'media_type', 'url')
+        fields = ('s3_key', 'media_type', 'url', 'blur_hash')
         read_only_fields = ('url',)
 
 
