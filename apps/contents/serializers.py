@@ -69,8 +69,13 @@ class ContentSerializer(serializers.ModelSerializer):
 
 
 class LiveStreamSerializer(serializers.ModelSerializer):
+    start = serializers.DateTimeField(required=False, allow_null=True)
+
     def validate(self, attrs):
-        if attrs['start'] < timezone.now():
+        now = timezone.now()
+        if attrs.get('start', None) is None:
+            attrs['start'] = now  # instant livestream
+        if attrs['start'] < now:
             raise serializers.ValidationError(detail={'start': 'invalid start time'})
         attrs['account'] = self.context['request'].user
         return attrs

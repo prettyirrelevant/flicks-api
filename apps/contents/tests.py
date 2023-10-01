@@ -150,7 +150,7 @@ class ContentsTest(TestCase):
         return_value=MockResponse(text=WALLET_CREATION_RESPONSE, status_code=201),
     )
     def test_livestream_view(self, mock_post):  # noqa: ARG002
-        # Create Livestream
+        # Create Livestream With Future Start
         data = {
             'title': 'My First Livestream',
             'description': 'I just opened a Flicks Account. Join me for my first Livestream.',
@@ -169,6 +169,28 @@ class ContentsTest(TestCase):
         self.assertEqual(livestream.description, data['description'])
         self.assertEqual(livestream.start.strftime('%Y-%m-%d %H:%M:%S'), data['start'])
         self.assertEqual(livestream.duration.seconds, data['duration'])
+
+        # Create Instant Livestream
+        instant_data = {
+            'title': 'My Instant Livestream',
+            'start': None,
+            'description': 'I just opened a Flicks Account. Join me for my first Instant Livestream.',
+            'duration': datetime.timedelta(minutes=10).seconds,
+        }
+        response = self.client.post(
+            '/api/contents/livestream',
+            data=json.dumps(instant_data),
+            content_type='application/json',
+            headers=self.auth_header,
+        )
+        self.assertEqual(response.status_code, 201)
+        instant_livestream = Livestream.objects.get(
+            account__address=self.keypair.pubkey(),
+            title=instant_data['title'],
+        )
+        self.assertEqual(instant_livestream.title, instant_data['title'])
+        self.assertEqual(instant_livestream.description, instant_data['description'])
+        self.assertEqual(instant_livestream.duration.seconds, instant_data['duration'])
 
         # Create Livestream [Invalid Start]
         data['start'] = (timezone.now() - datetime.timedelta(hours=1)).strftime('%Y-%m-%d %H:%M:%S')
@@ -206,7 +228,7 @@ class ContentsTest(TestCase):
             headers=self.auth_header,
         )
         self.assertEqual(response.status_code, 200)
-        self.assertEqual(len(response.json()['data']['results']), 1)
+        self.assertEqual(len(response.json()['data']['results']), 2)
 
         # Join Livestream Test
         response = self.client.get(path=f'/api/contents/livestream/{livestream.id}/join', headers=self.auth_header)
