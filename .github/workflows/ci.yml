@@ -17,6 +17,13 @@ env:
   CIRCLE_API_BASE_URL: ${{ secrets.CIRCLE_API_BASE_URL }}
   DJANGO_SETTINGS_MODULE: ${{ secrets.DJANGO_SETTINGS_MODULE }}
   CIRCLE_MASTER_WALLET_ID: ${{ secrets.CIRCLE_MASTER_WALLET_ID }}
+  AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+  AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+  BUCKET_NAME: ${{ secrets.BUCKET_NAME }}
+  MAX_FILE_UPLOAD_PER_REQUEST: ${{ secrets.MAX_FILE_UPLOAD_PER_REQUEST }}
+  PRESIGNED_URL_EXPIRATION: ${{ secrets.PRESIGNED_URL_EXPIRATION }}
+  AGORA_APP_ID: ${{ secrets.AGORA_APP_ID }}
+  AGORA_APP_CERTIFICATE: ${{ secrets.AGORA_APP_CERTIFICATE }}
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.head_ref || github.ref }}

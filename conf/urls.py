@@ -30,6 +30,7 @@ urlpatterns = [
     path('', index_view, name='index-view'),
     path('api/', include('apps.accounts.urls')),
     path('api/', include('apps.webhooks.urls')),
+    path('api/', include('apps.contents.urls')),
     path('api/docs', docs_schema_view.with_ui('swagger', cache_timeout=0), name='api-docs'),
 ]
 

@@ -50,7 +50,7 @@ THIRD_PARTY_APPS = [
     'huey.contrib.djhuey',
 ]
 
-LOCAL_APPS: list[str] = ['apps.accounts', 'apps.webhooks', 'apps.transactions']
+LOCAL_APPS: list[str] = ['apps.accounts', 'apps.webhooks', 'apps.transactions', 'apps.contents']
 
 INSTALLED_APPS = DJANGO_APPS + THIRD_PARTY_APPS + LOCAL_APPS
 
@@ -258,6 +258,21 @@ SWAGGER_SETTINGS = {
 CIRCLE_API_KEY = env.str('CIRCLE_API_KEY')
 CIRCLE_API_BASE_URL = env.str('CIRCLE_API_BASE_URL')
 CIRCLE_MASTER_WALLET_ID = env.int('CIRCLE_MASTER_WALLET_ID')
+
+# =======================================
+# FILE UPLOAD SETTINGS
+# =======================================
+AWS_ACCESS_KEY_ID = env.str('AWS_ACCESS_KEY_ID')
+AWS_SECRET_ACCESS_KEY = env.str('AWS_SECRET_ACCESS_KEY')
+BUCKET_NAME = env.str('BUCKET_NAME')
+MAX_FILE_UPLOAD_PER_REQUEST = env.int('MAX_FILE_UPLOAD_PER_REQUEST')
+PRESIGNED_URL_EXPIRATION = env.int('PRESIGNED_URL_EXPIRATION')
+
+# =======================================
+# FILE UPLOAD SETTINGS
+# =======================================
+AGORA_APP_ID = env.str('AGORA_APP_ID')
+AGORA_APP_CERTIFICATE = env.str('AGORA_APP_CERTIFICATE')
 
 
 # ==============================================================================
