@@ -1,10 +1,10 @@
 import datetime
 
-import boto3
-
 from django.db import models
 from django.conf import settings
 from django.core.validators import MaxValueValidator, MinValueValidator
+
+from services.s3 import S3Service
 
 from utils.models import UUIDModel, TimestampedModel
 
@@ -41,16 +41,8 @@ class Media(UUIDModel, TimestampedModel, models.Model):
 
     @property
     def url(self):
-        s3_client = boto3.client(
-            's3',
-            aws_access_key_id=settings.AWS_ACCESS_KEY_ID,
-            aws_secret_access_key=settings.AWS_SECRET_ACCESS_KEY,
-        )
-        return s3_client.generate_presigned_url(
-            'get_object',
-            Params={'Bucket': settings.BUCKET_NAME, 'Key': self.s3_key},
-            ExpiresIn=settings.PRESIGNED_URL_EXPIRATION,
-        )
+        s3_service = S3Service(settings.AWS_ACCESS_KEY_ID, settings.AWS_SECRET_ACCESS_KEY, settings.BUCKET_NAME)
+        return s3_service.get_pre_signed_fetch_url(self.s3_key, settings.PRESIGNED_URL_EXPIRATION)
 
 
 class Livestream(UUIDModel, TimestampedModel, models.Model):

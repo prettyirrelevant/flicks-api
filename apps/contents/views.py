@@ -6,7 +6,7 @@ from rest_framework.generics import GenericAPIView, get_object_or_404
 
 from apps.accounts.permissions import IsAuthenticated
 
-from services.s3 import get_pre_signed_upload_url
+from services.s3 import S3Service
 from services.agora.token_builder import Role, RtcTokenBuilder
 
 from utils.pagination import CustomCursorPagination
@@ -34,8 +34,8 @@ class PreSignedURLView(APIView):
         response_data = {}
         for data in validated_data:
             key = f"{data['file_type']}s/{self.request.user.address}/{data['file_name']}"
-            response = get_pre_signed_upload_url(
-                settings.BUCKET_NAME,
+            s3_service = S3Service(settings.AWS_ACCESS_KEY_ID, settings.AWS_SECRET_ACCESS_KEY, settings.BUCKET_NAME)
+            response = s3_service.get_pre_signed_upload_url(
                 key,
                 data['file_type'],
                 settings.PRESIGNED_URL_EXPIRATION,
