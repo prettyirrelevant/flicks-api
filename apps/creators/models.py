@@ -11,7 +11,7 @@ from .choices import Blockchain
 from .exceptions import AccountSuspensionError, InsufficientBalanceError
 
 
-class Account(UUIDModel, TimestampedModel, models.Model):
+class Creator(UUIDModel, TimestampedModel, models.Model):
     address = models.CharField(
         'address',
         unique=True,
@@ -21,8 +21,10 @@ class Account(UUIDModel, TimestampedModel, models.Model):
     )
     email = models.EmailField('email', unique=True, blank=True, default='')
 
-    # This is populated by checking if the user has the address registered to a name service.
-    # Bonfida Name Service, Unstoppable Domains, ENS (added Solana address)
+    # Preference of moniker in descending order
+    # 1. Bonfida Name Service or SNS
+    # 2. User provided moniker without the .sol suffix
+    # 3. Creator address.
     moniker = models.CharField('moniker', max_length=250, blank=True, default='')
 
     is_suspended = models.BooleanField('is suspended', blank=True, default=False)
@@ -36,7 +38,7 @@ class Account(UUIDModel, TimestampedModel, models.Model):
 
 class Wallet(UUIDModel, TimestampedModel, models.Model):
     account = models.OneToOneField(
-        to=Account,
+        to=Creator,
         related_name='wallet',
         verbose_name='account',
         on_delete=models.SET_NULL,

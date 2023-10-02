@@ -1,9 +1,9 @@
 from django.apps import AppConfig
 
 
-class AccountsConfig(AppConfig):
+class CreatorsConfig(AppConfig):
     default_auto_field = 'django.db.models.BigAutoField'
-    name = 'apps.accounts'
+    name = 'apps.creators'
 
     def ready(self):  # noqa: PLR6301
-        import apps.accounts.signals  # noqa: F401
+        import apps.creators.signals  # noqa: F401

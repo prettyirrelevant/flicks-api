@@ -8,8 +8,8 @@ from huey.contrib.djhuey import lock_task, db_periodic_task
 
 from django.db import transaction
 
-from apps.accounts.models import Wallet
-from apps.accounts.choices import Blockchain
+from apps.creators.models import Wallet
+from apps.creators.choices import Blockchain
 from apps.transactions.models import Transaction
 from apps.transactions.choices import TransactionType, TransactionStatus
 

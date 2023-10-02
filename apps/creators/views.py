@@ -2,15 +2,15 @@ from rest_framework.generics import RetrieveAPIView, get_object_or_404
 
 from utils.responses import success_response
 
-from .models import Account
+from .models import Creator
 from .permissions import IsAuthenticated
-from .serializers import AccountSerializer
+from .serializers import CreatorSerializer
 
 
-class MyAccountAPIView(RetrieveAPIView):
-    queryset = Account.objects.select_related('wallet').prefetch_related('wallet__deposit_addresses')
+class CreatorAPIView(RetrieveAPIView):
+    queryset = Creator.objects.select_related('wallet').prefetch_related('wallet__deposit_addresses')
     permission_classes = (IsAuthenticated,)
-    serializer_class = AccountSerializer
+    serializer_class = CreatorSerializer
 
     def retrieve(self, request, *args, **kwargs):  # noqa: PLR6301
         response = super().retrieve(request, *args, **kwargs)

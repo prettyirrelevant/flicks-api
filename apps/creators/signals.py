@@ -4,7 +4,7 @@ from django.db.models.signals import post_save
 
 from services.circle import CircleAPI
 
-from .models import Wallet, Account
+from .models import Wallet, Creator
 from .tasks import create_deposit_addresses_for_wallet
 
 circle_api = CircleAPI(
@@ -13,7 +13,7 @@ circle_api = CircleAPI(
 )
 
 
-@receiver(post_save, sender=Account)
+@receiver(post_save, sender=Creator)
 def create_profile(sender, instance, created, **kwargs):  # noqa: ARG001
     if not created:
         return

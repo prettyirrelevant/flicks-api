@@ -1,6 +1,6 @@
 from rest_framework import serializers
 
-from .models import Wallet, Account, WalletDepositAddress
+from .models import Wallet, Creator, WalletDepositAddress
 
 
 class WalletDepositAddressSerializer(serializers.ModelSerializer):
@@ -17,11 +17,11 @@ class WalletSerializer(serializers.ModelSerializer):
         fields = ('id', 'balance', 'deposit_addresses', 'created_at', 'updated_at')
 
 
-class AccountSerializer(serializers.ModelSerializer):
+class CreatorSerializer(serializers.ModelSerializer):
     wallet = WalletSerializer()
 
     class Meta:
-        model = Account
+        model = Creator
         fields = (
             'id',
             'address',

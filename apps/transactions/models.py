@@ -7,7 +7,7 @@ from .choices import TransactionType, TransactionStatus
 
 class Transaction(UUIDModel, TimestampedModel, models.Model):
     account = models.ForeignKey(
-        to='accounts.Account',
+        to='creators.Creator',
         verbose_name='account',
         on_delete=models.SET_NULL,
         related_name='transactions',
