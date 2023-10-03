@@ -1,39 +1,14 @@
 import uuid
-import logging
+from typing import Any
 from decimal import Decimal
-from typing import Any, Literal
 
-import requests
-
-logger = logging.getLogger(__name__)
+from . import RequestMixin
 
 
-class CircleAPI:
+class CircleAPI(RequestMixin):
     def __init__(self, api_key: str, base_url: str) -> None:
         self.api_key = api_key
         self.base_url = base_url
-        self.session = requests.Session()
-
-    def _request(
-        self,
-        method: Literal['GET', 'POST'],
-        endpoint: str,
-        params: dict[str, Any] | None = None,
-        data: dict[str, Any] | None = None,
-    ) -> requests.Response:
-        headers = {
-            'Authorization': f'Bearer {self.api_key}',
-            'Content-Type': 'application/json',
-        }
-        url = f'{self.base_url}/{endpoint}'
-        try:
-            response = self.session.request(method, url, params=params, json=data, headers=headers)
-            response.raise_for_status()
-        except requests.exceptions.RequestException as e:
-            logger.exception('Error occurred while making request to %s with error %s', url, e.response.json())
-            return None
-
-        return response
 
     def ping(self) -> bool:
         response = self._request('GET', 'ping')
