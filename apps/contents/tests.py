@@ -10,7 +10,7 @@ from django.utils import timezone
 
 from rest_framework.test import APIClient
 
-from apps.accounts.tests import WALLET_CREATION_RESPONSE
+from apps.creators.tests import WALLET_CREATION_RESPONSE
 
 from utils.mock import MockResponse
 

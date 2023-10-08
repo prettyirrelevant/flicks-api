@@ -1,8 +1,12 @@
 from decimal import Decimal
 from typing import ClassVar
 
+from encrypted_fields.fields import EncryptedEmailField
+
 from django.db import models, transaction
 from django.core.validators import MaxLengthValidator, MinLengthValidator
+
+from apps.subscriptions.choices import SubscriptionType
 
 from utils.constants import ZERO
 from utils.models import UUIDModel, TimestampedModel
@@ -19,16 +23,24 @@ class Creator(UUIDModel, TimestampedModel, models.Model):
         max_length=44,
         validators=[MinLengthValidator(32), MaxLengthValidator(44)],
     )
-    email = models.EmailField('email', unique=True, blank=True, default='')
+    bio = models.CharField('bio', max_length=200, default='')
+    email = EncryptedEmailField('email', unique=True, blank=True, default='')
 
     # Preference of moniker in descending order
     # 1. Bonfida Name Service or SNS
-    # 2. User provided moniker without the .sol suffix
-    # 3. Creator address.
+    # 2. User provided moniker without .sol suffix
+    # 3. Creator address
     moniker = models.CharField('moniker', max_length=250, blank=True, default='')
 
     is_suspended = models.BooleanField('is suspended', blank=True, default=False)
     suspension_reason = models.TextField('suspension reason', default='')
+
+    subscription_type = models.CharField(
+        'subscription type',
+        blank=True,
+        max_length=8,
+        choices=SubscriptionType.choices,
+    )
 
     is_verified = models.BooleanField('is verified', blank=True, default=False)
 
@@ -37,10 +49,10 @@ class Creator(UUIDModel, TimestampedModel, models.Model):
 
 
 class Wallet(UUIDModel, TimestampedModel, models.Model):
-    account = models.OneToOneField(
+    creator = models.OneToOneField(
         to=Creator,
         related_name='wallet',
-        verbose_name='account',
+        verbose_name='creator',
         on_delete=models.SET_NULL,
         blank=True,
         null=True,
@@ -53,16 +65,16 @@ class Wallet(UUIDModel, TimestampedModel, models.Model):
 
     @transaction.atomic()
     def top_up(self, amount: Decimal):
-        if self.account.is_suspended:
-            raise AccountSuspensionError(self.account.suspension_reason)
+        if self.creator.is_suspended:
+            raise AccountSuspensionError(self.creator.suspension_reason)
 
         self.balance = models.F('balance') + amount
         self.save()
 
     @transaction.atomic()
     def withdraw(self, amount: Decimal):
-        if self.account.is_suspended:
-            raise AccountSuspensionError(self.account.suspension_reason)
+        if self.creator.is_suspended:
+            raise AccountSuspensionError(self.creator.suspension_reason)
 
         if self.balance - amount < ZERO:
             raise InsufficientBalanceError(f'Your balance is {self.balance} while attempting to withdraw {amount}')
@@ -72,8 +84,8 @@ class Wallet(UUIDModel, TimestampedModel, models.Model):
 
     @transaction.atomic()
     def transfer(self, amount: Decimal, recipient: 'Wallet'):
-        if self.account.is_suspended:
-            raise AccountSuspensionError(self.account.suspension_reason)
+        if self.creator.is_suspended:
+            raise AccountSuspensionError(self.creator.suspension_reason)
 
         if self.balance - amount < ZERO:
             raise InsufficientBalanceError(f'Your balance is {self.balance} while attempting to transfer {amount}')

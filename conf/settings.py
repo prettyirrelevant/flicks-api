@@ -50,7 +50,7 @@ THIRD_PARTY_APPS = [
     'huey.contrib.djhuey',
 ]
 
-LOCAL_APPS: list[str] = ['apps.creators', 'apps.webhooks', 'apps.transactions', 'apps.contents']
+LOCAL_APPS: list[str] = ['apps.creators', 'apps.webhooks', 'apps.transactions', 'apps.contents', 'apps.subscriptions']
 
 INSTALLED_APPS = DJANGO_APPS + THIRD_PARTY_APPS + LOCAL_APPS
 

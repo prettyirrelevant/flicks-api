@@ -75,7 +75,7 @@ def handle_wallet_deposits_webhook(message, webhook):
     Transaction.objects.create(
         amount=amount,
         metadata=message,
-        account=wallet.account,
+        account=wallet.creator,
         reference=message['id'],
         tx_type=TransactionType.CREDIT,
         status=TransactionStatus.SUCCESSFUL,

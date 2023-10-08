@@ -33,7 +33,7 @@ def create_deposit_addresses_for_wallet(wallet_id):
             response = circle_api.create_address_for_wallet(wallet_id=wallet.provider_id, chain=blockchain.value)
             if response is None:
                 raise Exception(  # noqa: TRY002  # pylint: disable=broad-exception-raised
-                    f'Unable to create {blockchain.value} address for wallet {wallet.account.address}',
+                    f'Unable to create {blockchain.value} address for wallet {wallet.creator.address}',
                 )
 
             WalletDepositAddress.objects.create(
@@ -66,7 +66,7 @@ def move_funds_to_master_wallet():
 
         Transaction.objects.create(
             amount=amount,
-            account=wallet.account,
+            account=wallet.creator,
             status=TransactionStatus.PENDING,
             narration=f'Transfer {amount} USDC to master wallet',
             tx_type=TransactionType.MOVE_TO_MASTER_WALLET,

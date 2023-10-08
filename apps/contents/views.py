@@ -4,7 +4,7 @@ from rest_framework.views import APIView
 from rest_framework.mixins import ListModelMixin
 from rest_framework.generics import GenericAPIView, get_object_or_404
 
-from apps.accounts.permissions import IsAuthenticated
+from apps.creators.permissions import IsAuthenticated
 
 from services.s3 import S3Service
 from services.agora.token_builder import Role, RtcTokenBuilder
