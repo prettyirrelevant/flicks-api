@@ -1,6 +1,6 @@
 from rest_framework.exceptions import ParseError
 from rest_framework.generics import GenericAPIView
-from rest_framework.mixins import UpdateModelMixin
+from rest_framework.mixins import CreateModelMixin
 
 from apps.creators.permissions import IsAuthenticated
 
@@ -11,24 +11,29 @@ from .models import NFTSubscription, FreeSubscription, MonetarySubscription
 from .serializers import NFTSubscriptionSerializer, FreeSubscriptionSerializer, MonetarySubscriptionSerializer
 
 
-class SubscriptionsAPIView(GenericAPIView, UpdateModelMixin):
+class SubscriptionsAPIView(GenericAPIView, CreateModelMixin):
     permission_classes = (IsAuthenticated,)
 
     def get_serializer_class(self):
-        if self.request.data['type'].lower() == SubscriptionType.FREE:
+        subscription_type = self.request.data.get('type')
+        if subscription_type is None:
+            raise ParseError('`type` is missing from request payload')
+
+        if subscription_type == SubscriptionType.FREE:
             return FreeSubscriptionSerializer
 
-        if self.request.data['type'].lower() == SubscriptionType.MONETARY:
+        if subscription_type == SubscriptionType.MONETARY:
             return MonetarySubscriptionSerializer
 
-        if self.request.data['type'].lower() == SubscriptionType.NFT:
+        if subscription_type == SubscriptionType.NFT:
             return NFTSubscriptionSerializer
 
-        raise ParseError(f'{self.request.data["type"]} is not a supported subscription type')
+        raise ParseError(f'{subscription_type} is not a supported subscription type')
 
     def put(self, request, *args, **kwargs):
-        subscription_type = request.data.pop('type')
-        response = self.put(request, *args, *kwargs)
+        request.data.pop('type')
+
+        response = self.create(request, *args, *kwargs)
         return success_response(data=response.data, status_code=response.status_code)
 
     def get(self, request, *args, **kwargs):
@@ -48,10 +53,6 @@ class SubscriptionsAPIView(GenericAPIView, UpdateModelMixin):
                 'monetary': monetary_subscriptions_serializer.data,
             },
         )
-
-
-class SubscriptionModificationView(GenericAPIView, UpdateModelMixin):
-    ...
 
 
 class SubscribeToCreatorAPIView(GenericAPIView):

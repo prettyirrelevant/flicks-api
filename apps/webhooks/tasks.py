@@ -26,6 +26,7 @@ def handle_pending_webhooks():
     for webhook in Webhook.objects.filter(status=WebhookStatus.PENDING):
         if webhook.notification_type == WebhookType.SUBSCRIPTION_CONFIRMATION:
             handle_subscription_confirmation_webhook(webhook)
+
         elif webhook.notification_type == WebhookType.TRANSFERS:
             message = json.loads(webhook.payload['Message'], strict=False)
             if (
