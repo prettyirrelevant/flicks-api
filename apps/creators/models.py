@@ -26,11 +26,8 @@ class Creator(UUIDModel, TimestampedModel, models.Model):
     bio = models.CharField('bio', max_length=200, default='')
     email = EncryptedEmailField('email', unique=True, blank=True, default='')
 
-    # Preference of moniker in descending order
-    # 1. Bonfida Name Service or SNS
-    # 2. User provided moniker without .sol suffix
-    # 3. Creator address
-    moniker = models.CharField('moniker', max_length=250, blank=True, default='')
+    # bonfida name service or user provider name(without .sol suffix)
+    moniker = models.TextField('moniker', unique=True, blank=True, default='')
 
     is_suspended = models.BooleanField('is suspended', blank=True, default=False)
     suspension_reason = models.TextField('suspension reason', default='')
@@ -46,6 +43,10 @@ class Creator(UUIDModel, TimestampedModel, models.Model):
 
     def __str__(self):
         return self.address
+
+    @property
+    def display_name(self) -> str:
+        return self.moniker or self.address
 
 
 class Wallet(UUIDModel, TimestampedModel, models.Model):

@@ -1,5 +1,7 @@
 from typing import TYPE_CHECKING, Any, Union
 
+from django.db import transaction
+
 from rest_framework import serializers
 
 from .choices import SubscriptionType, SubscriptionStatus, SubscriptionDetailStatus
@@ -45,6 +47,7 @@ class BaseSubscriptionSerializer(serializers.ModelSerializer):
 
         raise AssertionError(f'Unsupported subscription model {model.__name__}.')
 
+    @transaction.atomic()
     def create_subscription(
         self,
         subscription_model: Union[type[FreeSubscription], type[MonetarySubscription], type[NFTSubscription]],

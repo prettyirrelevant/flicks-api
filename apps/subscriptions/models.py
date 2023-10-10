@@ -1,3 +1,5 @@
+from typing import ClassVar
+
 from django.db import models
 from django.contrib.contenttypes.models import ContentType
 from django.contrib.contenttypes.fields import GenericRelation, GenericForeignKey
@@ -98,3 +100,8 @@ class SubscriptionDetail(UUIDModel, TimestampedModel, models.Model):
 
     expires_at = models.DateTimeField('expires at', blank=False)
     status = models.CharField('status', max_length=10, choices=SubscriptionDetailStatus.choices, blank=False)
+
+    class Meta:
+        constraints: ClassVar[list] = [
+            models.UniqueConstraint(fields=('creator', 'subscriber'), name='creator_subscriber_unique'),
+        ]
