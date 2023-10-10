@@ -42,7 +42,7 @@ build-backend = "poetry.core.masonry.api"
 [tool.black]
 line-length = 119
 skip-string-normalization = true
-target-version = ['py39']
+target-version = ['py311']
 exclude = '''
   /(
     | \.eggs
@@ -109,7 +109,7 @@ select = [
     "TD",
 ]
 exclude = ["migrations", ".venv"]
-ignore = ["TRY003", "G004", "TRY301"]
+ignore = ["TRY003", "G004", "TRY301", "DJ008"]
 
 [tool.ruff.per-file-ignores]
 "**/test_**.py" = ["S101"]

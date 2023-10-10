@@ -8,8 +8,8 @@ from huey.contrib.djhuey import lock_task, db_periodic_task
 
 from django.db import transaction
 
-from apps.accounts.models import Wallet
-from apps.accounts.choices import Blockchain
+from apps.creators.models import Wallet
+from apps.creators.choices import Blockchain
 from apps.transactions.models import Transaction
 from apps.transactions.choices import TransactionType, TransactionStatus
 
@@ -26,6 +26,7 @@ def handle_pending_webhooks():
     for webhook in Webhook.objects.filter(status=WebhookStatus.PENDING):
         if webhook.notification_type == WebhookType.SUBSCRIPTION_CONFIRMATION:
             handle_subscription_confirmation_webhook(webhook)
+
         elif webhook.notification_type == WebhookType.TRANSFERS:
             message = json.loads(webhook.payload['Message'], strict=False)
             if (
@@ -75,7 +76,7 @@ def handle_wallet_deposits_webhook(message, webhook):
     Transaction.objects.create(
         amount=amount,
         metadata=message,
-        account=wallet.account,
+        account=wallet.creator,
         reference=message['id'],
         tx_type=TransactionType.CREDIT,
         status=TransactionStatus.SUCCESSFUL,

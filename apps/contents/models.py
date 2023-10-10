@@ -13,7 +13,7 @@ from .choices import MediaType
 
 class Content(UUIDModel, TimestampedModel, models.Model):
     account = models.ForeignKey(
-        to='accounts.Account',
+        to='creators.Creator',
         verbose_name='account',
         on_delete=models.CASCADE,
         related_name='contents',
@@ -48,7 +48,7 @@ class Media(UUIDModel, TimestampedModel, models.Model):
 
 class Livestream(UUIDModel, TimestampedModel, models.Model):
     account = models.ForeignKey(
-        to='accounts.Account',
+        to='creators.Creator',
         verbose_name='account',
         on_delete=models.CASCADE,
         related_name='livestream',

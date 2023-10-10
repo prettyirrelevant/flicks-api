@@ -50,7 +50,7 @@ THIRD_PARTY_APPS = [
     'huey.contrib.djhuey',
 ]
 
-LOCAL_APPS: list[str] = ['apps.accounts', 'apps.webhooks', 'apps.transactions', 'apps.contents']
+LOCAL_APPS: list[str] = ['apps.creators', 'apps.webhooks', 'apps.transactions', 'apps.contents', 'apps.subscriptions']
 
 INSTALLED_APPS = DJANGO_APPS + THIRD_PARTY_APPS + LOCAL_APPS
 
@@ -183,7 +183,7 @@ X_FRAME_OPTIONS = 'DENY'
 REST_FRAMEWORK: dict[str, Any] = {
     'DEFAULT_PERMISSION_CLASSES': ['rest_framework.permissions.AllowAny'],
     'DEFAULT_RENDERER_CLASSES': ['rest_framework.renderers.JSONRenderer'],
-    'DEFAULT_AUTHENTICATION_CLASSES': ['apps.accounts.authentication.Web3Authentication'],
+    'DEFAULT_AUTHENTICATION_CLASSES': ['apps.creators.authentication.Web3Authentication'],
     'EXCEPTION_HANDLER': 'utils.views.custom_exception_handler',
 }
 if DEBUG:
@@ -262,14 +262,14 @@ CIRCLE_MASTER_WALLET_ID = env.int('CIRCLE_MASTER_WALLET_ID')
 # =======================================
 # FILE UPLOAD SETTINGS
 # =======================================
+BUCKET_NAME = env.str('BUCKET_NAME')
 AWS_ACCESS_KEY_ID = env.str('AWS_ACCESS_KEY_ID')
 AWS_SECRET_ACCESS_KEY = env.str('AWS_SECRET_ACCESS_KEY')
-BUCKET_NAME = env.str('BUCKET_NAME')
-MAX_FILE_UPLOAD_PER_REQUEST = env.int('MAX_FILE_UPLOAD_PER_REQUEST')
 PRESIGNED_URL_EXPIRATION = env.int('PRESIGNED_URL_EXPIRATION')
+MAX_FILE_UPLOAD_PER_REQUEST = env.int('MAX_FILE_UPLOAD_PER_REQUEST')
 
 # =======================================
-# FILE UPLOAD SETTINGS
+# AGORA SETTINGS
 # =======================================
 AGORA_APP_ID = env.str('AGORA_APP_ID')
 AGORA_APP_CERTIFICATE = env.str('AGORA_APP_CERTIFICATE')
