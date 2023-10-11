@@ -12,8 +12,8 @@ from apps.creators.permissions import IsAuthenticated
 from services.s3 import S3Service
 from services.agora.token_builder import Role, RtcTokenBuilder
 
+from utils.responses import success_response
 from utils.pagination import CustomCursorPagination
-from utils.responses import error_response, success_response
 
 from .models import Comment, Content, Livestream
 from .permissions import IsCommentOwner, IsSubscribedToContent
@@ -29,25 +29,33 @@ from .serializers import (
 logger = logging.getLogger(__name__)
 
 
-class PreSignedURLView(APIView):
+class PreSignedURLView(GenericAPIView):
     permission_classes = (IsAuthenticated,)
+    serializer_class = PreSignedURLSerializer
 
     def post(self, request):
-        serializer = PreSignedURLSerializer(data=request.data, many=True)
+        serializer = self.get_serializer(data=request.data, many=True)
         serializer.is_valid(raise_exception=True)
+
         validated_data = serializer.validated_data
         if len(validated_data) > settings.MAX_FILE_UPLOAD_PER_REQUEST:
-            return error_response('max file upload per request exceeded', {})
+            raise serializer.ValidationError('Max file upload per request exceeded')
+
         response_data = {}
         for data in validated_data:
             key = f"{data['file_type']}s/{self.request.user.address}/{data['file_name']}"
-            s3_service = S3Service(settings.AWS_ACCESS_KEY_ID, settings.AWS_SECRET_ACCESS_KEY, settings.BUCKET_NAME)
+            s3_service = S3Service(
+                bucket=settings.BUCKET_NAME,
+                access_key=settings.AWS_ACCESS_KEY_ID,
+                secret_key=settings.AWS_SECRET_ACCESS_KEY,
+            )
             response = s3_service.get_pre_signed_upload_url(
-                key,
-                data['file_type'],
-                settings.PRESIGNED_URL_EXPIRATION,
+                key=key,
+                file_type=data['file_type'],
+                expiration=settings.PRESIGNED_URL_EXPIRATION,
             )
             response_data[data['file_name']] = response
+
         return success_response(response_data)
 
 
