@@ -12,13 +12,12 @@ from utils.models import UUIDModel, TimestampedModel
 class FreeSubscription(UUIDModel, TimestampedModel, models.Model):
     creator = models.ForeignKey(
         to='creators.Creator',
-        related_name='nft_subscriptions',
+        related_name='free_subscriptions',
         verbose_name='creator',
         on_delete=models.SET_NULL,
         blank=True,
         null=True,
     )
-    free_subscriptions = GenericRelation('creators.SubscriptionDetail')
     status = models.CharField('status', max_length=10, choices=SubscriptionStatus.choices, blank=False)
 
 
@@ -37,8 +36,6 @@ class NFTSubscription(UUIDModel, TimestampedModel, models.Model):
     collection_description = models.TextField('collection description', blank=False)
     collection_address = models.CharField('collection address', max_length=44, blank=False)
 
-    nft_subscriptions = GenericRelation('creators.SubscriptionDetail')
-
     status = models.CharField('status', max_length=10, choices=SubscriptionStatus.choices, blank=False)
 
 
@@ -51,8 +48,6 @@ class MonetarySubscription(UUIDModel, TimestampedModel, models.Model):
         blank=True,
         null=True,
     )
-
-    monetary_subscriptions = GenericRelation('creators.SubscriptionDetail')
 
     amount = models.DecimalField('amount', max_digits=20, decimal_places=2, blank=False)
     status = models.CharField('status', max_length=10, choices=SubscriptionStatus.choices, blank=False)
@@ -77,25 +72,30 @@ class SubscriptionDetail(UUIDModel, TimestampedModel, models.Model):
     """
 
     creator = models.ForeignKey(
+        blank=False,
+        db_index=True,
         to='creators.Creator',
-        related_name='subscribers',
         verbose_name='creator',
-        on_delete=models.SET_NULL,
-        blank=True,
-        null=True,
+        on_delete=models.CASCADE,
+        related_name='subscribers',
     )
     subscriber = models.ForeignKey(
+        blank=False,
+        db_index=True,
         to='creators.Creator',
+        verbose_name='subscriber',
+        on_delete=models.CASCADE,
         related_name='subscriptions',
-        verbose_name='creator',
-        on_delete=models.SET_NULL,
-        blank=True,
-        null=True,
     )
 
     # generic foreign key relationships for subscriptions
     subscription_id = models.UUIDField('subscription id', blank=False)
-    subscription_type = models.ForeignKey(ContentType, on_delete=models.CASCADE)
+    subscription_type = models.ForeignKey(
+        to=ContentType,
+        related_name='+',
+        on_delete=models.CASCADE,
+        verbose_name='subscription type',
+    )
     subscription_object = GenericForeignKey(ct_field='subscription_type', fk_field='subscription_id')
 
     expires_at = models.DateTimeField('expires at', blank=False)
