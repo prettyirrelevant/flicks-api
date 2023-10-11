@@ -4,8 +4,6 @@ from solders.signature import Signature
 from rest_framework.exceptions import AuthenticationFailed
 from rest_framework.authentication import TokenAuthentication
 
-from apps.subscriptions.choices import SubscriptionType
-
 from .models import Creator
 
 
@@ -24,10 +22,7 @@ class Web3Authentication(TokenAuthentication):
             if not signature.verify(public_key, msg.encode()):
                 raise AuthenticationFailed('Signature provided is not valid for the address.')
 
-            account, _ = Creator.objects.get_or_create(
-                address=str(public_key),
-                defaults={'address': str(public_key), 'subscription_type': SubscriptionType.FREE},
-            )
+            account = Creator.objects.get(address=str(public_key))
         except Exception as e:  # noqa: BLE001
             if isinstance(e, AuthenticationFailed):
                 raise

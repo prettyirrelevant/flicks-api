@@ -1,10 +1,24 @@
-from rest_framework.generics import RetrieveAPIView, get_object_or_404
+from typing import ClassVar
+
+from rest_framework.generics import GenericAPIView, RetrieveAPIView, get_object_or_404
 
 from utils.responses import success_response
 
 from .models import Creator
 from .permissions import IsAuthenticated
-from .serializers import CreatorSerializer
+from .serializers import CreatorSerializer, CreatorCreationSerializer
+
+
+class CreatorCreationAPIView(GenericAPIView):
+    serializer_class = CreatorCreationSerializer
+    permission_classes: ClassVar[list] = []
+
+    def post(self, request, *args, **kwargs):  # noqa: ARG002
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+        Creator.objects.create(**serializer.validated_data)
+        return success_response('Creator created successfully.')
 
 
 class CreatorAPIView(RetrieveAPIView):

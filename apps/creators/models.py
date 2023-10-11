@@ -25,6 +25,7 @@ class Creator(UUIDModel, TimestampedModel, models.Model):
     )
     bio = models.CharField('bio', max_length=200, default='')
     email = EncryptedEmailField('email', unique=True, blank=True, default='')
+    social_links = models.JSONField('socials', default=dict)
 
     # bonfida name service or user provider name(without .sol suffix)
     moniker = models.TextField('moniker', unique=True, blank=True, default='')
@@ -39,7 +40,7 @@ class Creator(UUIDModel, TimestampedModel, models.Model):
         choices=SubscriptionType.choices,
     )
 
-    is_verified = models.BooleanField('is verified', blank=True, default=False)
+    is_verified = models.BooleanField('is verified', default=False)
 
     def __str__(self):
         return self.address
