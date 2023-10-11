@@ -4,8 +4,10 @@ from django.utils import timezone
 
 from rest_framework import serializers
 
+from apps.creators.serializers import MinimalCreatorSerializer
+
 from .choices import MediaType
-from .models import Media, Content, Livestream
+from .models import Media, Comment, Content, Livestream
 
 
 class PreSignedURLSerializer(serializers.Serializer):
@@ -56,16 +58,42 @@ class UpdateContentSerializer(serializers.ModelSerializer):
         fields = ('caption',)
 
 
+class CommentSerializer(serializers.ModelSerializer):
+    author = MinimalCreatorSerializer()
+
+    class Meta:
+        model = Comment
+        fields = ('id', 'author', 'message', 'created_at', 'updated_at')
+        read_only_fields = ('id', 'author', 'created_at', 'updated_at')
+
+    def create(self, validated_data):
+        return Comment.objects.create(
+            content=self.context['content'],
+            message=validated_data['message'],
+            author=self.context['request'].user,
+        )
+
+
 class ContentSerializer(serializers.ModelSerializer):
+    account = MinimalCreatorSerializer()
+    comments = CommentSerializer(many=True)
     media = serializers.SerializerMethodField()
+    is_liked = serializers.SerializerMethodField()
+    likes_count = serializers.SerializerMethodField()
 
     def get_media(self, obj):  # noqa: PLR6301
         qs = obj.media.all()
         return MediaSerializer(qs, many=True).data
 
+    def get_likes_count(self, obj):  # noqa: PLR6301
+        return obj.likes.count()
+
+    def get_is_liked(self, obj):
+        return obj.likes.filter(id=self.context['request'].user.id).exists()
+
     class Meta:
         model = Content
-        fields = ('id', 'caption', 'media', 'created_at', 'updated_at')
+        fields = ('id', 'caption', 'media', 'likes_count', 'created_at', 'updated_at')
 
 
 class LiveStreamSerializer(serializers.ModelSerializer):

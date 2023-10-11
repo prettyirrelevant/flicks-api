@@ -24,8 +24,10 @@ class Creator(UUIDModel, TimestampedModel, models.Model):
         validators=[MinLengthValidator(32), MaxLengthValidator(44)],
     )
     bio = models.CharField('bio', max_length=200, default='')
-    email = EncryptedEmailField('email', unique=True, blank=True, default='')
+    image_url = models.URLField('image url', default='')
+    banner_url = models.URLField('banner url', default='')
     social_links = models.JSONField('socials', default=dict)
+    email = EncryptedEmailField('email', unique=True, blank=True, default='')
 
     # bonfida name service or user provider name(without .sol suffix)
     moniker = models.TextField('moniker', unique=True, blank=True, default='')

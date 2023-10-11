@@ -1,5 +1,8 @@
+import logging
+
 from django.conf import settings
 
+from rest_framework import status
 from rest_framework.views import APIView
 from rest_framework.mixins import ListModelMixin
 from rest_framework.generics import GenericAPIView, get_object_or_404
@@ -12,14 +15,18 @@ from services.agora.token_builder import Role, RtcTokenBuilder
 from utils.pagination import CustomCursorPagination
 from utils.responses import error_response, success_response
 
-from .models import Content, Livestream
+from .models import Comment, Content, Livestream
+from .permissions import IsCommentOwner, IsSubscribedToContent
 from .serializers import (
+    CommentSerializer,
     ContentSerializer,
     LiveStreamSerializer,
     PreSignedURLSerializer,
     CreateContentSerializer,
     UpdateContentSerializer,
 )
+
+logger = logging.getLogger(__name__)
 
 
 class PreSignedURLView(APIView):
@@ -126,3 +133,59 @@ class JoinLivestreamView(APIView):
             token_expiration,
         )
         return success_response({'token': token, 'channel_name': str(stream.id), 'user_account': request.user.address})
+
+
+class LikesAPIView(GenericAPIView):
+    lookup_field = 'id'
+    queryset = Content.objects.get_queryset()
+    permission_classes = (IsAuthenticated, IsSubscribedToContent)
+
+    def post(self, request, *args, **kwargs):  # noqa: ARG002
+        content = self.get_object()
+        content.likes.add(request.user)
+        return success_response('Content liked successfully')
+
+    def delete(self, request, *args, **kwargs):  # noqa: ARG002
+        content = self.get_object()
+        try:
+            content.likes.remove(request.user)
+        except Exception:
+            logger.exception('An exception occurred while unliking content %s', content.id)
+
+        return success_response('Content unliked successfully')
+
+
+class CreateCommentAPIVIew(GenericAPIView):
+    lookup_field = 'id'
+    serializer_class = CommentSerializer
+    queryset = Content.objects.get_queryset()
+    permission_classes = (IsAuthenticated, IsSubscribedToContent)
+
+    def post(self, request, *args, **kwargs):  # noqa: ARG002
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+        return success_response(data=serializer.data, status_code=status.HTTP_201_CREATED)
+
+    def get_serializer_context(self):
+        context = super().get_serializer_context()
+        context['content'] = self.get_object()
+        return context
+
+
+class DeleteCommentAPIView(GenericAPIView):
+    queryset = Comment.objects.get_queryset()
+    permission_classes = (IsAuthenticated, IsCommentOwner)
+
+    def delete(self, request, *args, **kwargs):  # noqa: ARG002
+        obj = self.get_object()
+        obj.delete()
+
+        return success_response(None, status_code=status.HTTP_204_NO_CONTENT)
+
+    def get_object(self):
+        return Comment.objects.get(
+            author=self.request.user,
+            id=self.kwargs['comment_id'],
+            content_id=self.kwargs['content_id'],
+        )

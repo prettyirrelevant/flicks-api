@@ -20,6 +20,7 @@ class Content(UUIDModel, TimestampedModel, models.Model):
         blank=False,
     )
     caption = models.TextField(verbose_name='content caption')
+    likes = models.ManyToManyField(to='creators.Creator', verbose_name='likes', related_name='likes')
 
     def __str__(self):
         return f'{self.account.address} - {self.caption}'
@@ -67,3 +68,21 @@ class Livestream(UUIDModel, TimestampedModel, models.Model):
 
     def __str__(self):
         return f'Livestream: {self.title}'
+
+
+class Comment(UUIDModel, TimestampedModel, models.Model):
+    content = models.ForeignKey(
+        to=Content,
+        blank=False,
+        verbose_name='content',
+        related_name='comments',
+        on_delete=models.CASCADE,
+    )
+    author = models.ForeignKey(
+        blank=False,
+        to='creators.Creator',
+        verbose_name='author',
+        on_delete=models.CASCADE,
+        related_name='my_comments',
+    )
+    message = models.CharField('message', max_length=200, blank=False)
