@@ -32,13 +32,15 @@ class CreatorSerializer(serializers.ModelSerializer):
         model = Creator
         fields = (
             'id',
-            'biowallet',
+            'bio',
+            'wallet',
             'address',
             'moniker',
             'created_at',
             'updated_at',
             'is_verified',
-            'social_linksis_suspended',
+            'social_links',
+            'is_suspended',
             'suspension_reason',
         )
 
