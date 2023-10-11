@@ -26,8 +26,8 @@ handler404 = 'utils.views.handler_404'
 handler500 = 'utils.views.handler_500'
 
 urlpatterns = [
-    path('', index_view, name='index-view'),
     path('admin/', admin.site.urls),
+    path('', index_view, name='index-view'),
     path('creators/', include('apps.creators.urls')),
     path('wehbooks/', include('apps.webhooks.urls')),
     path('contents/', include('apps.contents.urls')),
