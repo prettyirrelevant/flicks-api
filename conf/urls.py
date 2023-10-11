@@ -26,12 +26,13 @@ handler404 = 'utils.views.handler_404'
 handler500 = 'utils.views.handler_500'
 
 urlpatterns = [
-    path('admin/', admin.site.urls),
     path('', index_view, name='index-view'),
-    path('api/', include('apps.creators.urls')),
-    path('api/', include('apps.webhooks.urls')),
-    path('api/', include('apps.contents.urls')),
-    path('api/docs', docs_schema_view.with_ui('swagger', cache_timeout=0), name='api-docs'),
+    path('admin/', admin.site.urls),
+    path('creators/', include('apps.creators.urls')),
+    path('wehbooks/', include('apps.webhooks.urls')),
+    path('contents/', include('apps.contents.urls')),
+    path('subscriptions/', include('apps.subscriptions.urls')),
+    path('docs', docs_schema_view.with_ui('swagger', cache_timeout=0)),
 ]
 
 urlpatterns += static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)
