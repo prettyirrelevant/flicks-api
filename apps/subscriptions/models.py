@@ -73,7 +73,7 @@ class SubscriptionDetail(UUIDModel, TimestampedModel, models.Model):
         Otherwise, add a day to the current datetime.
 
 
-    Free subscriptions are issued a 50yrs subscription detail (it can be cancelled at any point).
+    Free subscriptions are issued a 10yrs subscription detail (it can be cancelled at any point).
     """
 
     creator = models.ForeignKey(
