@@ -2,14 +2,13 @@ from datetime import timedelta
 
 from solders.pubkey import Pubkey
 
+from django.conf import settings
 from django.utils import timezone
 
 from rest_framework import serializers
 from rest_framework.exceptions import ParseError
 from rest_framework.generics import GenericAPIView
 from rest_framework.mixins import CreateModelMixin
-
-from conf import settings
 
 from apps.creators.models import Creator
 from apps.transactions.models import Transaction
@@ -90,11 +89,13 @@ class SubscribeToCreatorAPIView(GenericAPIView):
         subscriber = request.user
 
         if creator.subscription_type == SubscriptionType.FREE:
-            return self.handle_free_subscription(creator, subscriber)
-        if creator.subscription_type == SubscriptionType.NFT:
-            return self.handle_nft_subscription(creator, subscriber)
-        if creator.subscription_type == SubscriptionType.MONETARY:
-            return self.handle_monetary_subscription(creator, subscriber)
+            self.handle_free_subscription(creator, subscriber)
+        elif creator.subscription_type == SubscriptionType.NFT:
+            self.handle_nft_subscription(creator, subscriber)
+        elif creator.subscription_type == SubscriptionType.MONETARY:
+            self.handle_monetary_subscription(creator, subscriber)
+        else:
+            raise serializers.ValidationError('Invalid subscription type')
 
         return success_response(data='Subscription created successfully')
 

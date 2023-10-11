@@ -24,6 +24,7 @@ env:
   PRESIGNED_URL_EXPIRATION: ${{ secrets.PRESIGNED_URL_EXPIRATION }}
   AGORA_APP_ID: ${{ secrets.AGORA_APP_ID }}
   AGORA_APP_CERTIFICATE: ${{ secrets.AGORA_APP_CERTIFICATE }}
+  SHARINGAN_BASE_URL: ${{ secrets.SHARINGAN_BASE_URL }}
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.head_ref || github.ref }}
