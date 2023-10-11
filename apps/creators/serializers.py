@@ -14,7 +14,7 @@ from .models import Wallet, Creator, WalletDepositAddress
 class WalletDepositAddressSerializer(serializers.ModelSerializer):
     class Meta:
         model = WalletDepositAddress
-        fields = ('id', 'address', 'chain', 'created_at', 'updated_at')
+        fields = ('id', 'address', 'blockchain', 'created_at', 'updated_at')
 
 
 class WalletSerializer(serializers.ModelSerializer):

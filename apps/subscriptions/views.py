@@ -6,6 +6,7 @@ from django.conf import settings
 from django.utils import timezone
 
 from rest_framework import serializers
+from rest_framework.views import APIView
 from rest_framework.exceptions import ParseError
 from rest_framework.generics import GenericAPIView
 from rest_framework.mixins import CreateModelMixin
@@ -24,9 +25,13 @@ from .serializers import NFTSubscriptionSerializer, FreeSubscriptionSerializer, 
 
 
 class SubscriptionsAPIView(GenericAPIView, CreateModelMixin):
+    serializer_class = FreeSubscriptionSerializer
     permission_classes = (IsAuthenticated,)
 
     def get_serializer_class(self):
+        if getattr(self, 'swagger_fake_view', False):
+            return super().get_serializer_class()
+
         subscription_type = self.request.data.get('type')
         if subscription_type is None:
             raise ParseError('`type` is missing from request payload')
@@ -42,7 +47,7 @@ class SubscriptionsAPIView(GenericAPIView, CreateModelMixin):
 
         raise ParseError(f'{subscription_type} is not a supported subscription type')
 
-    def put(self, request, *args, **kwargs):
+    def post(self, request, *args, **kwargs):
         request.data.pop('type')
 
         response = self.create(request, *args, *kwargs)
@@ -67,7 +72,7 @@ class SubscriptionsAPIView(GenericAPIView, CreateModelMixin):
         )
 
 
-class SubscribeToCreatorAPIView(GenericAPIView):
+class SubscribeToCreatorAPIView(APIView):
     permission_classes = (IsAuthenticated,)
     sharingan_service = SharinganService(settings.SHARINGAN_BASE_URL)
 

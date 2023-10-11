@@ -93,7 +93,17 @@ class ContentSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Content
-        fields = ('id', 'caption', 'media', 'likes_count', 'created_at', 'updated_at')
+        fields = (
+            'id',
+            'account',
+            'caption',
+            'media',
+            'comments',
+            'is_liked',
+            'likes_count',
+            'created_at',
+            'updated_at',
+        )
 
 
 class LiveStreamSerializer(serializers.ModelSerializer):

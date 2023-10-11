@@ -76,9 +76,9 @@ class HttpAndHttpsOpenAPISchemaGenerator(OpenAPISchemaGenerator):
 
 docs_schema_view = get_schema_view(
     openapi.Info(
-        title='BridgeBloc API',
+        title='Flicks API',
         default_version='v1',
-        description='BridgeBloc API',
+        description='Flicks API',
         license=openapi.License(name='MIT License'),
     ),
     generator_class=HttpAndHttpsOpenAPISchemaGenerator,

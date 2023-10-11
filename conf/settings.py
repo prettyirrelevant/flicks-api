@@ -45,7 +45,7 @@ if DEBUG:
 
 THIRD_PARTY_APPS = [
     'drf_yasg',
-    'extra_checks',
+    # 'extra_checks',
     'rest_framework',
     'huey.contrib.djhuey',
 ]
@@ -273,6 +273,11 @@ MAX_FILE_UPLOAD_PER_REQUEST = env.int('MAX_FILE_UPLOAD_PER_REQUEST')
 # =======================================
 AGORA_APP_ID = env.str('AGORA_APP_ID')
 AGORA_APP_CERTIFICATE = env.str('AGORA_APP_CERTIFICATE')
+
+# =======================================
+# SHARINGAN SETTINGS
+# =======================================
+SHARINGAN_BASE_URL = env.str('SHARINGAN_BASE_URL')
 
 
 # ==============================================================================

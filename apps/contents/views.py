@@ -135,10 +135,21 @@ class JoinLivestreamView(APIView):
         return success_response({'token': token, 'channel_name': str(stream.id), 'user_account': request.user.address})
 
 
-class LikesAPIView(GenericAPIView):
-    lookup_field = 'id'
+class LikesAPIView(APIView):
     queryset = Content.objects.get_queryset()
     permission_classes = (IsAuthenticated, IsSubscribedToContent)
+
+    def get_object(self):
+        obj = self.queryset.get(id=self.kwargs['content_id'])
+        for permission in self.get_permissions():
+            if not permission.has_object_permission(self.request, self, obj):
+                self.permission_denied(
+                    self.request,
+                    message=getattr(permission, 'message', None),
+                    code=getattr(permission, 'code', None),
+                )
+
+        return obj
 
     def post(self, request, *args, **kwargs):  # noqa: ARG002
         content = self.get_object()
@@ -160,6 +171,21 @@ class CreateCommentAPIVIew(GenericAPIView):
     serializer_class = CommentSerializer
     queryset = Content.objects.get_queryset()
     permission_classes = (IsAuthenticated, IsSubscribedToContent)
+
+    def get_object(self):
+        if getattr(self, 'swagger_fake_view', False):
+            return self.queryset.none()
+
+        obj = self.queryset.get(id=self.kwargs['content_id'])
+        for permission in self.get_permissions():
+            if not permission.has_object_permission(self.request, self, obj):
+                self.permission_denied(
+                    self.request,
+                    message=getattr(permission, 'message', None),
+                    code=getattr(permission, 'code', None),
+                )
+
+        return obj
 
     def post(self, request, *args, **kwargs):  # noqa: ARG002
         serializer = self.get_serializer(data=request.data)
