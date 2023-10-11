@@ -36,12 +36,26 @@ class CreatorSerializer(serializers.ModelSerializer):
             'wallet',
             'address',
             'moniker',
+            'image_url',
+            'banner_url',
             'created_at',
             'updated_at',
             'is_verified',
             'social_links',
             'is_suspended',
             'suspension_reason',
+        )
+
+
+class MinimalCreatorSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Creator
+        fields = (
+            'id',
+            'address',
+            'moniker',
+            'image_url',
+            'is_verified',
         )
 
 
