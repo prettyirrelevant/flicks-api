@@ -11,6 +11,8 @@ from rest_framework.generics import GenericAPIView, get_object_or_404
 
 from apps.transactions.models import Transaction
 from apps.creators.permissions import IsAuthenticated
+from apps.subscriptions.models import SubscriptionDetail
+from apps.subscriptions.choices import SubscriptionDetailStatus
 
 from services.s3 import S3Service
 from services.agora.token_builder import Role, RtcTokenBuilder
@@ -20,8 +22,6 @@ from utils.responses import error_response, success_response
 
 from .choices import ContentType
 from .models import Comment, Content, Livestream
-from apps.subscriptions.models import SubscriptionDetail
-from apps.subscriptions.choices import SubscriptionDetailStatus
 from .permissions import IsCommentOwner, IsSubscribedToContent, IsSubscribedToCreator
 from .serializers import (
     ContentSerializer,
@@ -103,8 +103,9 @@ class PayForContentAPIView(APIView):
         payer = request.user
         if payer.wallet.balance < content.price:
             return error_response(
-                {'message': 'Insufficient balance to purchase this content.'},
+                errors=None,
                 status_code=status.HTTP_400_BAD_REQUEST,
+                message='Insufficient balance to purchase this content.',
             )
 
         with transaction.atomic():
@@ -181,8 +182,9 @@ class JoinLivestreamView(APIView):
         stream = get_object_or_404(Livestream.objects.all(), id=stream_id)
         if not self.is_subscribed(creator=stream.creator, subscriber=self.request.user):
             return error_response(
-                message='You are not subscribed to this creator',
+                errors=None,
                 status_code=status.HTTP_403_FORBIDDEN,
+                message='You are not subscribed to this creator',
             )
 
         role = Role.PUBLISHER if stream.creator == self.request.user else Role.SUBSCRIBER
