@@ -1,7 +1,5 @@
 from datetime import timedelta
 
-from drf_yasg import openapi
-from drf_yasg.utils import swagger_auto_schema
 from solders.pubkey import Pubkey
 
 from django.conf import settings
@@ -23,8 +21,12 @@ from utils.responses import success_response
 
 from .choices import SubscriptionType, SubscriptionDetailStatus
 from .models import NFTSubscription, FreeSubscription, SubscriptionDetail, MonetarySubscription
-from .serializers import NFTSubscriptionSerializer, FreeSubscriptionSerializer, MonetarySubscriptionSerializer, \
-    DummySubscriptionSerializer
+from .serializers import (
+    NFTSubscriptionSerializer,
+    FreeSubscriptionSerializer,
+    DummySubscriptionSerializer,
+    MonetarySubscriptionSerializer,
+)
 
 
 class SubscriptionsAPIView(GenericAPIView, CreateModelMixin):

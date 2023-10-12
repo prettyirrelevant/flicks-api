@@ -82,11 +82,12 @@ class BaseSubscriptionSerializer(serializers.ModelSerializer):
 
 class DummySubscriptionSerializer(serializers.Serializer):
     """This is simply a serializer with all the necessary fields to create subscription for documentation purposes."""
+
     collection_name = serializers.CharField(required=False)
     collection_address = serializers.CharField(required=False)
     collection_image_url = serializers.CharField(required=False)
     collection_description = serializers.CharField(required=False)
-    type = serializers.ChoiceField(choices=SubscriptionType, required=True)
+    type = serializers.ChoiceField(choices=SubscriptionType, required=True)  # noqa: A003
     status = serializers.ChoiceField(choices=SubscriptionStatus, required=True)
     amount = serializers.DecimalField(max_digits=20, decimal_places=2, required=False)
 
