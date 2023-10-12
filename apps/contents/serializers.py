@@ -72,7 +72,7 @@ class UpdateContentSerializer(serializers.ModelSerializer):
         fields = ('caption',)
 
 
-class CreateCommentSerializer(serializers.ModelSerializer):
+class CreateCommentSerializer(serializers.Serializer):
     message = serializers.CharField(max_length=200, required=True)
 
     def create(self, validated_data):
