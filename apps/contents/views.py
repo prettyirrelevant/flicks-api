@@ -21,9 +21,9 @@ from .serializers import (
     CommentSerializer,
     ContentSerializer,
     LiveStreamSerializer,
-    PreSignedURLSerializer,
     CreateContentSerializer,
     UpdateContentSerializer,
+    PreSignedURLListSerializer,
 )
 
 logger = logging.getLogger(__name__)
@@ -31,18 +31,14 @@ logger = logging.getLogger(__name__)
 
 class PreSignedURLView(GenericAPIView):
     permission_classes = (IsAuthenticated,)
-    serializer_class = PreSignedURLSerializer
+    serializer_class = PreSignedURLListSerializer
 
     def post(self, request):
-        serializer = self.get_serializer(data=request.data, many=True)
+        serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
 
-        validated_data = serializer.validated_data
-        if len(validated_data) > settings.MAX_FILE_UPLOAD_PER_REQUEST:
-            raise serializer.ValidationError('Max file upload per request exceeded')
-
         response_data = {}
-        for data in validated_data:
+        for data in serializer.validated_data['files']:
             key = f"{data['file_type']}s/{self.request.user.address}/{data['file_name']}"
             s3_service = S3Service(
                 bucket=settings.BUCKET_NAME,
@@ -74,7 +70,7 @@ class ContentView(GenericAPIView, ListModelMixin):
         return Content.objects.filter(account=self.request.user).prefetch_related('media').order_by('-created_at')
 
     def post(self, request, *args, **kwargs):  # noqa: ARG002
-        serializer = self.get_serializer_class()(data=self.request.data, context={'request': request})
+        serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         serializer.save()
         return success_response({'message': 'content created successfully'}, 201)
@@ -82,7 +78,7 @@ class ContentView(GenericAPIView, ListModelMixin):
     def patch(self, request, content_id):
         qs = self.get_queryset()
         content = get_object_or_404(qs, id=content_id)
-        serializer = self.get_serializer_class()(instance=content, data=request.data, partial=True)
+        serializer = self.get_serializer(instance=content, data=request.data, partial=True)
         serializer.is_valid(raise_exception=True)
         serializer.save()
         return success_response({'message': 'content updated successfully'})
@@ -101,18 +97,17 @@ class LivestreamView(GenericAPIView, ListModelMixin):
         return Livestream.objects.filter(account=self.request.user).order_by('-created_at')
 
     def post(self, request, *args, **kwargs):  # noqa: ARG002
-        serializer = self.serializer_class(data=self.request.data, context={'request': request})
+        serializer = self.get_serializer(data=self.request.data)
         serializer.is_valid(raise_exception=True)
         serializer.save()
         return success_response({'message': 'livestream created successfully'}, 201)
 
     def patch(self, request, stream_id):
         stream = get_object_or_404(self.get_queryset(), id=stream_id)
-        serializer = self.serializer_class(
+        serializer = self.get_serializer(
             instance=stream,
             data=request.data,
             partial=True,
-            context={'request': request},
         )
         serializer.is_valid(raise_exception=True)
         serializer.save()

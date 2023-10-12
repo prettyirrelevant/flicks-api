@@ -39,7 +39,7 @@ class WebhookTest(TestCase):
 
     def test_webhook_endpoint_confirm_subscription(self):
         response = self.client.post(
-            path='/api/webhooks',
+            path='/webhooks/',
             data=CONFIRM_SUBSCRIPTION_PAYLOAD,
             content_type='text/plain; charset=utf-8',
             headers={'x-amz-sns-message-type': 'SubscriptionConfirmation'},
@@ -49,10 +49,10 @@ class WebhookTest(TestCase):
 
     def test_webhook_endpoint_transfer_received(self):
         response = self.client.post(
-            path='/api/webhooks',
+            path='/webhooks/',
             data=TRANSFER_RECEIVED_PAYLOAD,
             content_type='text/plain; charset=utf-8',
-            headers={'x-amz-sns-message-type': 'SubscriptionConfirmation'},
+            headers={'x-amz-sns-message-type': 'Notification'},
         )
         self.assertEqual(response.status_code, 200)
         self.assertEqual(Webhook.objects.count(), 1)
