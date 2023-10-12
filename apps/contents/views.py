@@ -1,26 +1,29 @@
 import logging
 
 from django.conf import settings
+from django.db import transaction
 
 from rest_framework import status
 from rest_framework.views import APIView
 from rest_framework.mixins import ListModelMixin
 from rest_framework.generics import GenericAPIView, get_object_or_404
 
+from apps.transactions.models import Transaction
 from apps.creators.permissions import IsAuthenticated
 
 from services.s3 import S3Service
 from services.agora.token_builder import Role, RtcTokenBuilder
 
-from utils.responses import success_response
 from utils.pagination import CustomCursorPagination
+from utils.responses import error_response, success_response
 
+from .choices import ContentType
 from .models import Comment, Content, Livestream
-from .permissions import IsCommentOwner, IsSubscribedToContent
+from .permissions import IsCommentOwner, IsSubscribedToContent, IsSubscribedToCreator
 from .serializers import (
-    CommentSerializer,
     ContentSerializer,
     LiveStreamSerializer,
+    CreateCommentSerializer,
     CreateContentSerializer,
     UpdateContentSerializer,
     PreSignedURLListSerializer,
@@ -88,6 +91,43 @@ class ContentView(GenericAPIView, ListModelMixin):
         return success_response(response.data)
 
 
+class PayForContentAPIView(APIView):
+    permission_classes = (IsAuthenticated, IsSubscribedToCreator)
+    queryset = Content.objects.filter(content_type=ContentType.PAID)
+
+    def post(self, request, *args, **kwargs):  # noqa: ARG002
+        content = self.get_object()
+        payer = request.user
+        if payer.wallet.balance < content.price:
+            return error_response(
+                {'message': 'Insufficient balance to purchase this content.'},
+                status_code=status.HTTP_400_BAD_REQUEST,
+            )
+
+        with transaction.atomic():
+            payer.wallet.transfer(amount=content.price, recipient=content.creator)
+            Transaction.create_payment_for_content(amount=content.price, creator=content.creator, subscriber=payer)
+
+            content.purchases.add(payer)
+
+        return success_response('Content paid for successfully')
+
+    def get_object(self):
+        if getattr(self, 'swagger_fake_view', False):
+            return self.queryset.none()
+
+        obj = self.queryset.get(id=self.kwargs['content_id'])
+        for permission in self.get_permissions():
+            if not permission.has_object_permission(self.request, self, obj):
+                self.permission_denied(
+                    self.request,
+                    message=getattr(permission, 'message', None),
+                    code=getattr(permission, 'code', None),
+                )
+
+        return obj
+
+
 class LivestreamView(GenericAPIView, ListModelMixin):
     permission_classes = (IsAuthenticated,)
     pagination_class = CustomCursorPagination
@@ -140,9 +180,12 @@ class JoinLivestreamView(APIView):
 
 class LikesAPIView(APIView):
     queryset = Content.objects.get_queryset()
-    permission_classes = (IsAuthenticated, IsSubscribedToContent)
+    permission_classes = (IsAuthenticated, IsSubscribedToCreator, IsSubscribedToContent)
 
     def get_object(self):
+        if getattr(self, 'swagger_fake_view', False):
+            return self.queryset.none()
+
         obj = self.queryset.get(id=self.kwargs['content_id'])
         for permission in self.get_permissions():
             if not permission.has_object_permission(self.request, self, obj):
@@ -170,16 +213,15 @@ class LikesAPIView(APIView):
 
 
 class CreateCommentAPIVIew(GenericAPIView):
-    lookup_field = 'id'
-    serializer_class = CommentSerializer
     queryset = Content.objects.get_queryset()
-    permission_classes = (IsAuthenticated, IsSubscribedToContent)
+    serializer_class = CreateCommentSerializer
+    permission_classes = (IsAuthenticated, IsSubscribedToCreator, IsSubscribedToContent)
 
     def get_object(self):
         if getattr(self, 'swagger_fake_view', False):
             return self.queryset.none()
 
-        obj = self.queryset.get(id=self.kwargs['content_id'])
+        obj = self.get_queryset().get(id=self.kwargs['content_id'])
         for permission in self.get_permissions():
             if not permission.has_object_permission(self.request, self, obj):
                 self.permission_denied(
@@ -202,7 +244,7 @@ class CreateCommentAPIVIew(GenericAPIView):
         return context
 
 
-class DeleteCommentAPIView(GenericAPIView):
+class DeleteCommentAPIView(APIView):
     queryset = Comment.objects.get_queryset()
     permission_classes = (IsAuthenticated, IsCommentOwner)
 
@@ -213,8 +255,20 @@ class DeleteCommentAPIView(GenericAPIView):
         return success_response(None, status_code=status.HTTP_204_NO_CONTENT)
 
     def get_object(self):
-        return Comment.objects.get(
+        if getattr(self, 'swagger_fake_view', False):
+            return self.queryset.none()
+
+        obj = self.queryset.get(
             author=self.request.user,
             id=self.kwargs['comment_id'],
             content_id=self.kwargs['content_id'],
         )
+        for permission in self.get_permissions():
+            if not permission.has_object_permission(self.request, self, obj):
+                self.permission_denied(
+                    self.request,
+                    message=getattr(permission, 'message', None),
+                    code=getattr(permission, 'code', None),
+                )
+
+        return obj

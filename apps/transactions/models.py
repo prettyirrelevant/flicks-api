@@ -42,10 +42,30 @@ class Transaction(UUIDModel, TimestampedModel, models.Model):
         )
         subscriber_tx = cls(
             amount=amount,
-            account=creator,
+            account=subscriber,
             tx_type=TransactionType.DEBIT,
             status=TransactionStatus.SUCCESSFUL,
             narration=f'You just paid {amount} USD to subscribe to {creator.moniker}',
+        )
+
+        cls.objects.bulk_create([creator_tx, subscriber_tx])
+
+    @classmethod
+    @transaction.atomic()
+    def create_payment_for_content(cls, amount: Decimal, creator: 'Creator', subscriber: 'Creator'):
+        creator_tx = cls(
+            amount=amount,
+            account=creator,
+            tx_type=TransactionType.CREDIT,
+            status=TransactionStatus.SUCCESSFUL,
+            narration=f'{subscriber.moniker} just paid {amount} USD for your content',
+        )
+        subscriber_tx = cls(
+            amount=amount,
+            account=subscriber,
+            tx_type=TransactionType.DEBIT,
+            status=TransactionStatus.SUCCESSFUL,
+            narration=f'You just paid {amount} USD to view a content from {creator.moniker}',
         )
 
         cls.objects.bulk_create([creator_tx, subscriber_tx])
