@@ -6,15 +6,16 @@ from django.core.validators import MaxValueValidator, MinValueValidator
 
 from services.s3 import S3Service
 
+from utils.constants import ZERO
 from utils.models import UUIDModel, TimestampedModel
 
-from .choices import MediaType
+from .choices import MediaType, ContentType
 
 
 class Content(UUIDModel, TimestampedModel, models.Model):
-    account = models.ForeignKey(
+    creator = models.ForeignKey(
         to='creators.Creator',
-        verbose_name='account',
+        verbose_name='creator',
         on_delete=models.CASCADE,
         related_name='contents',
         blank=False,
@@ -22,8 +23,13 @@ class Content(UUIDModel, TimestampedModel, models.Model):
     caption = models.TextField(verbose_name='content caption')
     likes = models.ManyToManyField(to='creators.Creator', verbose_name='likes', related_name='likes')
 
+    # `price` & `purchases` are only used when the content_type is paid.
+    purchases = models.ManyToManyField(to='creators.Creator', related_name='purchased_contents')
+    price = models.DecimalField('price', max_digits=20, decimal_places=2, default=ZERO)
+    content_type = models.CharField('content type', max_length=4, choices=ContentType.choices, blank=False)
+
     def __str__(self):
-        return f'{self.account.address} - {self.caption}'
+        return f'{self.creator.address} - {self.caption}'
 
 
 class Media(UUIDModel, TimestampedModel, models.Model):
@@ -48,11 +54,11 @@ class Media(UUIDModel, TimestampedModel, models.Model):
 
 
 class Livestream(UUIDModel, TimestampedModel, models.Model):
-    account = models.ForeignKey(
+    creator = models.ForeignKey(
         to='creators.Creator',
-        verbose_name='account',
+        verbose_name='creator',
         on_delete=models.CASCADE,
-        related_name='livestream',
+        related_name='livestreams',
         blank=False,
     )
     title = models.CharField(max_length=50, blank=False, verbose_name='title')

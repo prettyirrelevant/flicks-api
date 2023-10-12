@@ -67,7 +67,7 @@ class ContentView(GenericAPIView, ListModelMixin):
         return ContentSerializer
 
     def get_queryset(self):
-        return Content.objects.filter(account=self.request.user).prefetch_related('media').order_by('-created_at')
+        return Content.objects.filter(creator=self.request.user).prefetch_related('media').order_by('-created_at')
 
     def post(self, request, *args, **kwargs):  # noqa: ARG002
         serializer = self.get_serializer(data=request.data)
@@ -94,7 +94,7 @@ class LivestreamView(GenericAPIView, ListModelMixin):
     serializer_class = LiveStreamSerializer
 
     def get_queryset(self):
-        return Livestream.objects.filter(account=self.request.user).order_by('-created_at')
+        return Livestream.objects.filter(creator=self.request.user).order_by('-created_at')
 
     def post(self, request, *args, **kwargs):  # noqa: ARG002
         serializer = self.get_serializer(data=self.request.data)
@@ -105,9 +105,9 @@ class LivestreamView(GenericAPIView, ListModelMixin):
     def patch(self, request, stream_id):
         stream = get_object_or_404(self.get_queryset(), id=stream_id)
         serializer = self.get_serializer(
+            partial=True,
             instance=stream,
             data=request.data,
-            partial=True,
         )
         serializer.is_valid(raise_exception=True)
         serializer.save()
@@ -123,17 +123,17 @@ class JoinLivestreamView(APIView):
 
     def get(self, request, stream_id):
         stream = get_object_or_404(Livestream.objects.all(), id=stream_id)
-        role = Role.PUBLISHER if stream.account == self.request.user else Role.SUBSCRIBER
+        role = Role.PUBLISHER if stream.creator == self.request.user else Role.SUBSCRIBER
         token_builder = RtcTokenBuilder()
         token_expiration = (stream.start + stream.duration).timestamp()
         token = token_builder.build_token_with_user_account(
-            settings.AGORA_APP_ID,
-            settings.AGORA_APP_CERTIFICATE,
-            str(stream.id),
-            request.user.address,
-            role,
-            token_expiration,
-            token_expiration,
+            role=role,
+            channel_name=str(stream.id),
+            account=request.user.address,
+            app_id=settings.AGORA_APP_ID,
+            token_expire=token_expiration,
+            privilege_expire=token_expiration,
+            app_certificate=settings.AGORA_APP_CERTIFICATE,
         )
         return success_response({'token': token, 'channel_name': str(stream.id), 'user_account': request.user.address})
 
