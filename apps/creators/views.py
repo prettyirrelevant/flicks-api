@@ -1,5 +1,8 @@
 from typing import ClassVar
 
+from drf_yasg import openapi
+from drf_yasg.utils import swagger_auto_schema
+
 from django.db.models import Q
 
 from rest_framework import serializers
@@ -37,6 +40,9 @@ class CreatorAPIView(RetrieveAPIView):
     queryset = Creator.objects.select_related('wallet').prefetch_related('wallet__deposit_addresses')
 
     def get_serializer_class(self):
+        if getattr(self, 'swagger_fake_view', False):
+            return super().get_serializer_class()
+
         if self.request.user.address == self.get_object().address:
             return CreatorSerializer
 
@@ -58,6 +64,16 @@ class SearchCreatorsAPIView(APIView):
     permission_classes = (IsAuthenticated,)
     serializer_class = MinimalCreatorSerializer
 
+    @swagger_auto_schema(
+        manual_parameters=[
+            openapi.Parameter(
+                'q',
+                openapi.IN_QUERY,
+                description='Query string to search for creator(s)',
+                type=openapi.TYPE_STRING,
+            ),
+        ],
+    )
     def get(self, request, *args, **kwargs):  # noqa: PLR6301 ARG002
         q = request.query_params.get('q')
         if q is None:
