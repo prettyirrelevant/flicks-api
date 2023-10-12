@@ -1,8 +1,6 @@
 from decimal import Decimal
 from typing import ClassVar
 
-from encrypted_fields.fields import EncryptedEmailField
-
 from django.db import models, transaction
 from django.core.validators import MaxLengthValidator, MinLengthValidator
 
@@ -24,20 +22,20 @@ class Creator(UUIDModel, TimestampedModel, models.Model):
         validators=[MinLengthValidator(32), MaxLengthValidator(44)],
     )
     bio = models.CharField('bio', max_length=200, default='')
-    image_url = models.URLField('image url', default='')
-    banner_url = models.URLField('banner url', default='')
+    image_url = models.URLField('image url', blank=False)
+    banner_url = models.URLField('banner url', blank=False)
     social_links = models.JSONField('socials', default=dict)
-    email = EncryptedEmailField('email', unique=True, blank=True, default='')
 
     # bonfida name service or user provider name(without .sol suffix)
-    moniker = models.TextField('moniker', unique=True, blank=True, default='')
+    moniker = models.TextField('moniker', unique=True, blank=False)
 
     is_suspended = models.BooleanField('is suspended', blank=True, default=False)
     suspension_reason = models.TextField('suspension reason', default='')
 
     subscription_type = models.CharField(
         'subscription type',
-        blank=True,
+        null=False,
+        blank=False,
         max_length=8,
         choices=SubscriptionType.choices,
     )

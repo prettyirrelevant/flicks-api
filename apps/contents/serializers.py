@@ -14,11 +14,15 @@ class PreSignedURLSerializer(serializers.Serializer):
     file_name = serializers.CharField(max_length=50)
     file_type = serializers.ChoiceField(choices=MediaType.choices)
 
-    def create(self, validated_data):
-        ...
 
-    def update(self, instance, validated_data):
-        ...
+class PreSignedURLListSerializer(serializers.Serializer):
+    files = PreSignedURLSerializer(required=True, many=True)
+
+    def validate_files(self, value):  # noqa: PLR6301
+        if len(value) > settings.MAX_FILE_UPLOAD_PER_REQUEST:
+            raise serializers.ValidationError('Max file upload per request exceeded')
+
+        return value
 
 
 class MediaSerializer(serializers.ModelSerializer):

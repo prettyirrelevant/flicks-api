@@ -35,7 +35,7 @@ def create_profile_and_subscription(sender, instance, created, **kwargs):  # noq
             )
 
         wallet = Wallet.objects.create(
-            account=instance,
+            creator=instance,
             provider_id=response['data']['walletId'],
         )
         create_deposit_addresses_for_wallet.schedule((wallet.id,), delay=1)

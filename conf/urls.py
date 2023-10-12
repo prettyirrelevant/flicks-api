@@ -29,7 +29,7 @@ urlpatterns = [
     path('admin/', admin.site.urls),
     path('', index_view, name='index-view'),
     path('creators/', include('apps.creators.urls')),
-    path('wehbooks/', include('apps.webhooks.urls')),
+    path('webhooks/', include('apps.webhooks.urls')),
     path('contents/', include('apps.contents.urls')),
     path('subscriptions/', include('apps.subscriptions.urls')),
     path('docs', docs_schema_view.with_ui('swagger', cache_timeout=0)),
