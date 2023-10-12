@@ -44,6 +44,27 @@ class CreatorSerializer(serializers.ModelSerializer):
             'social_links',
             'is_suspended',
             'suspension_reason',
+            'subscription_type',
+        )
+
+
+class CreatorWithoutWalletInfoSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Creator
+        fields = (
+            'id',
+            'bio',
+            'address',
+            'moniker',
+            'image_url',
+            'banner_url',
+            'created_at',
+            'updated_at',
+            'is_verified',
+            'social_links',
+            'is_suspended',
+            'suspension_reason',
+            'subscription_type',
         )
 
 
@@ -56,6 +77,7 @@ class MinimalCreatorSerializer(serializers.ModelSerializer):
             'moniker',
             'image_url',
             'is_verified',
+            'subscription_type',
         )
 
 

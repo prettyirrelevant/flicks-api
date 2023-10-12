@@ -1,12 +1,24 @@
 from typing import ClassVar
 
+from drf_yasg import openapi
+from drf_yasg.utils import swagger_auto_schema
+
+from django.db.models import Q
+
+from rest_framework import serializers
+from rest_framework.views import APIView
 from rest_framework.generics import GenericAPIView, RetrieveAPIView, get_object_or_404
 
 from utils.responses import success_response
 
 from .models import Creator
 from .permissions import IsAuthenticated
-from .serializers import CreatorSerializer, CreatorCreationSerializer
+from .serializers import (
+    CreatorSerializer,
+    MinimalCreatorSerializer,
+    CreatorCreationSerializer,
+    CreatorWithoutWalletInfoSerializer,
+)
 
 
 class CreatorCreationAPIView(GenericAPIView):
@@ -22,9 +34,19 @@ class CreatorCreationAPIView(GenericAPIView):
 
 
 class CreatorAPIView(RetrieveAPIView):
-    queryset = Creator.objects.select_related('wallet').prefetch_related('wallet__deposit_addresses')
+    lookup_field = 'address'
     permission_classes = (IsAuthenticated,)
-    serializer_class = CreatorSerializer
+    serializer_class = CreatorWithoutWalletInfoSerializer
+    queryset = Creator.objects.select_related('wallet').prefetch_related('wallet__deposit_addresses')
+
+    def get_serializer_class(self):
+        if getattr(self, 'swagger_fake_view', False):
+            return super().get_serializer_class()
+
+        if self.request.user.address == self.get_object().address:
+            return CreatorSerializer
+
+        return CreatorWithoutWalletInfoSerializer
 
     def retrieve(self, request, *args, **kwargs):  # noqa: PLR6301
         response = super().retrieve(request, *args, **kwargs)
@@ -36,3 +58,29 @@ class CreatorAPIView(RetrieveAPIView):
         self.check_object_permissions(self.request, obj)
 
         return obj
+
+
+class SearchCreatorsAPIView(APIView):
+    permission_classes = (IsAuthenticated,)
+    serializer_class = MinimalCreatorSerializer
+
+    @swagger_auto_schema(
+        manual_parameters=[
+            openapi.Parameter(
+                'q',
+                openapi.IN_QUERY,
+                description='Query string to search for creator(s)',
+                type=openapi.TYPE_STRING,
+            ),
+        ],
+    )
+    def get(self, request, *args, **kwargs):  # noqa: PLR6301 ARG002
+        q = request.query_params.get('q')
+        if q is None:
+            raise serializers.ValidationError('`q` query parameter is required.')
+
+        # This can be improved to use Postgres FTS but for now this should be sufficient.
+        qs = Creator.objects.filter(Q(address__icontains=q) | Q(moniker__icontains=q))
+        serializer = MinimalCreatorSerializer(qs, many=True)
+
+        return success_response(serializer.data)
