@@ -13,12 +13,7 @@ from utils.responses import success_response
 
 from .models import Creator
 from .permissions import IsAuthenticated
-from .serializers import (
-    CreatorSerializer,
-    MinimalCreatorSerializer,
-    CreatorCreationSerializer,
-    CreatorWithoutWalletInfoSerializer,
-)
+from .serializers import CreatorSerializer, MinimalCreatorSerializer, CreatorCreationSerializer
 
 
 class CreatorCreationAPIView(GenericAPIView):
@@ -35,18 +30,15 @@ class CreatorCreationAPIView(GenericAPIView):
 
 class CreatorAPIView(RetrieveAPIView):
     lookup_field = 'address'
+    serializer_class = CreatorSerializer
     permission_classes = (IsAuthenticated,)
-    serializer_class = CreatorWithoutWalletInfoSerializer
-    queryset = Creator.objects.select_related('wallet').prefetch_related('wallet__deposit_addresses')
-
-    def get_serializer_class(self):
-        if getattr(self, 'swagger_fake_view', False):
-            return super().get_serializer_class()
-
-        if self.request.user.address == self.get_object().address:
-            return CreatorSerializer
-
-        return CreatorWithoutWalletInfoSerializer
+    queryset = Creator.objects.select_related(
+        'wallet',
+        'contents',
+        'subscribers',
+        'nft_subscriptions',
+        'monetary_subscriptions',
+    ).prefetch_related('wallet__deposit_addresses')
 
     def retrieve(self, request, *args, **kwargs):  # noqa: PLR6301
         response = super().retrieve(request, *args, **kwargs)
