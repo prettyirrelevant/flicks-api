@@ -1,5 +1,7 @@
 from datetime import timedelta
 
+from drf_yasg import openapi
+from drf_yasg.utils import swagger_auto_schema
 from solders.pubkey import Pubkey
 
 from django.conf import settings
@@ -21,11 +23,12 @@ from utils.responses import success_response
 
 from .choices import SubscriptionType, SubscriptionDetailStatus
 from .models import NFTSubscription, FreeSubscription, SubscriptionDetail, MonetarySubscription
-from .serializers import NFTSubscriptionSerializer, FreeSubscriptionSerializer, MonetarySubscriptionSerializer
+from .serializers import NFTSubscriptionSerializer, FreeSubscriptionSerializer, MonetarySubscriptionSerializer, \
+    DummySubscriptionSerializer
 
 
 class SubscriptionsAPIView(GenericAPIView, CreateModelMixin):
-    serializer_class = FreeSubscriptionSerializer
+    serializer_class = DummySubscriptionSerializer
     permission_classes = (IsAuthenticated,)
 
     def get_serializer_class(self):
@@ -47,7 +50,12 @@ class SubscriptionsAPIView(GenericAPIView, CreateModelMixin):
 
         raise ParseError(f'{subscription_type} is not a supported subscription type')
 
-    def post(self, request, *args, **kwargs):
+    def put(self, request, *args, **kwargs):
+        """
+        When **type=free**, only **status** is needed.
+        When **type=monetary**, **status** and **amount** are needed.
+        When **type=nft**, **status**, **collection_name**, **collection_address**, **collection_image_url** and **collection_description** are needed.
+        """  # noqa: E501
         request.data.pop('type')
 
         response = self.create(request, *args, *kwargs)
