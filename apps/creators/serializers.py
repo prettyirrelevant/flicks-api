@@ -48,7 +48,7 @@ class CreatorSerializer(serializers.ModelSerializer):
         )
 
 
-class CreatorWithoutWalletSerializer(serializers.ModelSerializer):
+class CreatorWithoutWalletInfoSerializer(serializers.ModelSerializer):
     class Meta:
         model = Creator
         fields = (

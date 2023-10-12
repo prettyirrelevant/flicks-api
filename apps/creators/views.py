@@ -17,7 +17,7 @@ from .serializers import (
     CreatorSerializer,
     MinimalCreatorSerializer,
     CreatorCreationSerializer,
-    CreatorWithoutWalletSerializer,
+    CreatorWithoutWalletInfoSerializer,
 )
 
 
@@ -35,8 +35,8 @@ class CreatorCreationAPIView(GenericAPIView):
 
 class CreatorAPIView(RetrieveAPIView):
     lookup_field = 'address'
-    serializer_class = CreatorSerializer
     permission_classes = (IsAuthenticated,)
+    serializer_class = CreatorWithoutWalletInfoSerializer
     queryset = Creator.objects.select_related('wallet').prefetch_related('wallet__deposit_addresses')
 
     def get_serializer_class(self):
@@ -46,7 +46,7 @@ class CreatorAPIView(RetrieveAPIView):
         if self.request.user.address == self.get_object().address:
             return CreatorSerializer
 
-        return CreatorWithoutWalletSerializer
+        return CreatorWithoutWalletInfoSerializer
 
     def retrieve(self, request, *args, **kwargs):  # noqa: PLR6301
         response = super().retrieve(request, *args, **kwargs)
