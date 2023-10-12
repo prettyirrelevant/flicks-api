@@ -10,8 +10,11 @@ from .choices import ContentType
 
 class IsSubscribedToCreator(BasePermission):
     def has_object_permission(self, request, view, obj):  # noqa: PLR6301 ARG002
+        if request.user == obj.creator:
+            return True
+
         subscription_detail_qs = SubscriptionDetail.objects.filter(
-            creator=obj.account,
+            creator=obj.creator,
             subscriber=request.user,
             expires_at__lte=timezone.now(),
             status=SubscriptionDetailStatus.ACTIVE,

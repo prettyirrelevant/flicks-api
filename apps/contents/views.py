@@ -2,6 +2,7 @@ import logging
 
 from django.conf import settings
 from django.db import transaction
+from django.utils import timezone
 
 from rest_framework import status
 from rest_framework.views import APIView
@@ -19,6 +20,8 @@ from utils.responses import error_response, success_response
 
 from .choices import ContentType
 from .models import Comment, Content, Livestream
+from apps.subscriptions.models import SubscriptionDetail
+from apps.subscriptions.choices import SubscriptionDetailStatus
 from .permissions import IsCommentOwner, IsSubscribedToContent, IsSubscribedToCreator
 from .serializers import (
     ContentSerializer,
@@ -161,8 +164,27 @@ class LivestreamView(GenericAPIView, ListModelMixin):
 class JoinLivestreamView(APIView):
     permission_classes = (IsAuthenticated,)
 
+    @staticmethod
+    def is_subscribed(creator, subscriber):
+        if creator == subscriber:
+            return True
+
+        subscription_detail_qs = SubscriptionDetail.objects.filter(
+            creator=creator,
+            subscriber=subscriber,
+            expires_at__lte=timezone.now(),
+            status=SubscriptionDetailStatus.ACTIVE,
+        )
+        return subscription_detail_qs.exists()
+
     def get(self, request, stream_id):
         stream = get_object_or_404(Livestream.objects.all(), id=stream_id)
+        if not self.is_subscribed(creator=stream.creator, subscriber=self.request.user):
+            return error_response(
+                message='You are not subscribed to this creator',
+                status_code=status.HTTP_403_FORBIDDEN,
+            )
+
         role = Role.PUBLISHER if stream.creator == self.request.user else Role.SUBSCRIBER
         token_builder = RtcTokenBuilder()
         token_expiration = (stream.start + stream.duration).timestamp()
