@@ -27,6 +27,30 @@ class WalletSerializer(serializers.ModelSerializer):
 
 class CreatorSerializer(serializers.ModelSerializer):
     wallet = WalletSerializer()
+    contents_count = serializers.SerializerMethodField()
+    subscribers_count = serializers.SerializerMethodField()
+    subscription_info = serializers.SerializerMethodField()
+
+    def get_contents_count(self, obj):  # noqa: PLR6301
+        return obj.contents.count()
+
+    def get_subscribers_count(self, obj):  # noqa: PLR6301
+        return obj.subscribers.count()
+
+    def get_subscription_info(self, obj):  # noqa: PLR6301
+        if obj.subscription_type == SubscriptionType.NFT:
+            subscription = obj.nft_subscriptions.first()
+            return {
+                'collection_name': subscription.collection_name,
+                'collection_image': subscription.collection_image_url,
+                'collection_address': subscription.collection_address,
+                'collection_description': subscription.collection_description,
+            }
+        if obj.subscription_type == SubscriptionType.MONETARY:
+            subscription = obj.monetary_subscriptions.first()
+            return {'amount': subscription.amount}
+
+        return {}
 
     class Meta:
         model = Creator
@@ -43,26 +67,9 @@ class CreatorSerializer(serializers.ModelSerializer):
             'is_verified',
             'social_links',
             'is_suspended',
-            'suspension_reason',
-            'subscription_type',
-        )
-
-
-class CreatorWithoutWalletInfoSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = Creator
-        fields = (
-            'id',
-            'bio',
-            'address',
-            'moniker',
-            'image_url',
-            'banner_url',
-            'created_at',
-            'updated_at',
-            'is_verified',
-            'social_links',
-            'is_suspended',
+            'contents_count',
+            'subscription_info',
+            'subscribers_count',
             'suspension_reason',
             'subscription_type',
         )

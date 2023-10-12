@@ -92,6 +92,9 @@ class SubscribeToCreatorAPIView(APIView):
         if not public_key.is_on_curve():
             raise serializers.ValidationError('Invalid address provided for creator')
 
+        if self.request.user.address == creator_address:
+            raise serializers.ValidationError('You cannot subscribe to yourself')
+
         try:
             creator = Creator.objects.get(address=creator_address)
         except Creator.DoesNotExist as e:
