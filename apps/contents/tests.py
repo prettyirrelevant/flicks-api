@@ -2,6 +2,7 @@ import json
 import uuid
 import logging
 import datetime
+from decimal import Decimal
 from unittest.mock import patch
 
 from solders.keypair import Keypair
@@ -125,9 +126,10 @@ class ContentsTest(TestCase):
         )
         self.assertEqual(response.status_code, 401)
 
-        # Create Content
+        # Create Free Content
         data = {
             'caption': 'My First post',
+            'content_type': 'free',
             'media': [
                 {
                     'media_type': 'image',
@@ -148,8 +150,42 @@ class ContentsTest(TestCase):
             content_type='application/json',
         )
         self.assertEqual(response.status_code, 201)
-        content = Content.objects.get(account__address=self.keypair.pubkey())
+        content = Content.objects.get(creator__address=self.keypair.pubkey())
         self.assertEqual(content.caption, data['caption'])
+        self.assertEqual(str(content.price), '0.00')
+        self.assertEqual(content.content_type, 'free')
+        self.assertEqual(content.media.all().count(), len(data['media']))
+
+        # Create Paid Content With < $1.00
+        data['price'] = '0.55'
+        data['content_type'] = 'paid'
+        response = self.client.post(
+            path='/contents/',
+            data=json.dumps(data),
+            headers=self.auth_header,
+            content_type='application/json',
+        )
+        self.assertEqual(response.status_code, 400)
+        self.assertEqual(
+            first=response.json()['errors']['non_field_errors'][0],
+            second='Content with paywall must have a price of at least $1.00',
+        )
+
+        # Create Paid Content With $1.00
+        data['price'] = '1'
+        data['content_type'] = 'paid'
+        response = self.client.post(
+            path='/contents/',
+            data=json.dumps(data),
+            headers=self.auth_header,
+            content_type='application/json',
+        )
+        self.assertEqual(response.status_code, 201)
+
+        content = Content.objects.get(creator__address=self.keypair.pubkey(), price__gte=Decimal('1'))
+        self.assertEqual(content.caption, data['caption'])
+        self.assertEqual(str(content.price), '1.00')
+        self.assertEqual(content.content_type, 'paid')
         self.assertEqual(content.media.all().count(), len(data['media']))
 
         # Update Content Caption
@@ -180,7 +216,7 @@ class ContentsTest(TestCase):
             headers=self.auth_header,
         )
         self.assertEqual(response.status_code, 200)
-        self.assertEqual(len(response.json()['data']['results']), 1)
+        self.assertEqual(len(response.json()['data']['results']), 2)
 
     @patch(
         target='services.circle.CircleAPI._request',
@@ -201,7 +237,7 @@ class ContentsTest(TestCase):
             content_type='application/json',
         )
         self.assertEqual(response.status_code, 201)
-        livestream = Livestream.objects.get(account__address=self.keypair.pubkey())
+        livestream = Livestream.objects.get(creator__address=self.keypair.pubkey())
         self.assertEqual(livestream.title, data['title'])
         self.assertEqual(livestream.description, data['description'])
         self.assertEqual(livestream.start.strftime('%Y-%m-%d %H:%M:%S'), data['start'])
@@ -222,7 +258,7 @@ class ContentsTest(TestCase):
         )
         self.assertEqual(response.status_code, 201)
         instant_livestream = Livestream.objects.get(
-            account__address=self.keypair.pubkey(),
+            creator__address=self.keypair.pubkey(),
             title=instant_data['title'],
         )
         self.assertEqual(instant_livestream.title, instant_data['title'])

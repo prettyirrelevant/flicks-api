@@ -1,3 +1,5 @@
+from decimal import Decimal
+
 from django.conf import settings
 from django.db import transaction
 from django.utils import timezone
@@ -6,13 +8,15 @@ from rest_framework import serializers
 
 from apps.creators.serializers import MinimalCreatorSerializer
 
-from .choices import MediaType
+from utils.constants import ZERO
+
+from .choices import MediaType, ContentType
 from .models import Media, Comment, Content, Livestream
 
 
 class PreSignedURLSerializer(serializers.Serializer):
     file_name = serializers.CharField(max_length=50)
-    file_type = serializers.ChoiceField(choices=MediaType.choices)
+    file_type = serializers.ChoiceField(choices=MediaType.choices, required=True)
 
 
 class PreSignedURLListSerializer(serializers.Serializer):
@@ -34,6 +38,8 @@ class MediaSerializer(serializers.ModelSerializer):
 
 class CreateContentSerializer(serializers.Serializer):
     caption = serializers.CharField()
+    price = serializers.DecimalField(max_digits=20, decimal_places=2, default=ZERO)
+    content_type = serializers.ChoiceField(choices=ContentType.choices, required=True)
     media = serializers.ListField(
         child=MediaSerializer(),
         allow_empty=False,
@@ -41,25 +47,40 @@ class CreateContentSerializer(serializers.Serializer):
     )
 
     def create(self, validated_data):
-        account = self.context['request'].user
+        creator = self.context['request'].user
         with transaction.atomic():
-            content = Content.objects.create(account=account, caption=validated_data['caption'])
-            for media in validated_data['media']:
+            media = validated_data.pop('media')
+            content = Content.objects.create(**validated_data, creator=creator)
+            for entry in media:
                 Media.objects.create(
                     content=content,
-                    media_type=media['media_type'],
-                    s3_key=media['s3_key'],
+                    s3_key=entry['s3_key'],
+                    media_type=entry['media_type'],
                 )
             return content
 
-    def update(self, instance, validated_data):
-        ...
+    def validate(self, attrs):  # noqa: PLR6301
+        if attrs['content_type'] == ContentType.PAID and attrs['price'] < Decimal('1.00'):
+            raise serializers.ValidationError('Content with paywall must have a price of at least $1.00')
+
+        return attrs
 
 
 class UpdateContentSerializer(serializers.ModelSerializer):
     class Meta:
         model = Content
         fields = ('caption',)
+
+
+class CreateCommentSerializer(serializers.ModelSerializer):
+    message = serializers.CharField(max_length=200, required=True)
+
+    def create(self, validated_data):
+        return Comment.objects.create(
+            content=self.context['content'],
+            message=validated_data['message'],
+            author=self.context['request'].user,
+        )
 
 
 class CommentSerializer(serializers.ModelSerializer):
@@ -70,20 +91,14 @@ class CommentSerializer(serializers.ModelSerializer):
         fields = ('id', 'author', 'message', 'created_at', 'updated_at')
         read_only_fields = ('id', 'author', 'created_at', 'updated_at')
 
-    def create(self, validated_data):
-        return Comment.objects.create(
-            content=self.context['content'],
-            message=validated_data['message'],
-            author=self.context['request'].user,
-        )
-
 
 class ContentSerializer(serializers.ModelSerializer):
-    account = MinimalCreatorSerializer()
+    creator = MinimalCreatorSerializer()
     comments = CommentSerializer(many=True)
     media = serializers.SerializerMethodField()
     is_liked = serializers.SerializerMethodField()
     likes_count = serializers.SerializerMethodField()
+    is_purchased = serializers.SerializerMethodField()
 
     def get_media(self, obj):  # noqa: PLR6301
         qs = obj.media.all()
@@ -95,18 +110,28 @@ class ContentSerializer(serializers.ModelSerializer):
     def get_is_liked(self, obj):
         return obj.likes.filter(id=self.context['request'].user.id).exists()
 
+    def get_is_purchased(self, obj):
+        user = self.context['request'].user
+        if user == obj.creator:
+            return True
+
+        return obj.purchases.filter(id=user.id).exists()
+
     class Meta:
         model = Content
         fields = (
             'id',
-            'account',
-            'caption',
+            'price',
             'media',
+            'creator',
+            'caption',
             'comments',
             'is_liked',
-            'likes_count',
             'created_at',
             'updated_at',
+            'likes_count',
+            'is_purchased',
+            'content_type',
         )
 
 
@@ -119,10 +144,10 @@ class LiveStreamSerializer(serializers.ModelSerializer):
             attrs['start'] = now  # instant livestream
         if attrs['start'] < now:
             raise serializers.ValidationError(detail={'start': 'invalid start time'})
-        attrs['account'] = self.context['request'].user
+        attrs['creator'] = self.context['request'].user
         return attrs
 
     class Meta:
         model = Livestream
-        fields = ('id', 'account', 'title', 'description', 'start', 'duration')
-        read_only_fields = ('id', 'account')
+        fields = ('id', 'creator', 'title', 'description', 'start', 'duration')
+        read_only_fields = ('id', 'creator')

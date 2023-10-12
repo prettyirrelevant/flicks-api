@@ -1,26 +1,32 @@
 import logging
 
 from django.conf import settings
+from django.db import transaction
+from django.utils import timezone
 
 from rest_framework import status
 from rest_framework.views import APIView
 from rest_framework.mixins import ListModelMixin
 from rest_framework.generics import GenericAPIView, get_object_or_404
 
+from apps.transactions.models import Transaction
 from apps.creators.permissions import IsAuthenticated
+from apps.subscriptions.models import SubscriptionDetail
+from apps.subscriptions.choices import SubscriptionDetailStatus
 
 from services.s3 import S3Service
 from services.agora.token_builder import Role, RtcTokenBuilder
 
-from utils.responses import success_response
 from utils.pagination import CustomCursorPagination
+from utils.responses import error_response, success_response
 
+from .choices import ContentType
 from .models import Comment, Content, Livestream
-from .permissions import IsCommentOwner, IsSubscribedToContent
+from .permissions import IsCommentOwner, IsSubscribedToContent, IsSubscribedToCreator
 from .serializers import (
-    CommentSerializer,
     ContentSerializer,
     LiveStreamSerializer,
+    CreateCommentSerializer,
     CreateContentSerializer,
     UpdateContentSerializer,
     PreSignedURLListSerializer,
@@ -67,7 +73,7 @@ class ContentView(GenericAPIView, ListModelMixin):
         return ContentSerializer
 
     def get_queryset(self):
-        return Content.objects.filter(account=self.request.user).prefetch_related('media').order_by('-created_at')
+        return Content.objects.filter(creator=self.request.user).prefetch_related('media').order_by('-created_at')
 
     def post(self, request, *args, **kwargs):  # noqa: ARG002
         serializer = self.get_serializer(data=request.data)
@@ -88,13 +94,51 @@ class ContentView(GenericAPIView, ListModelMixin):
         return success_response(response.data)
 
 
+class PayForContentAPIView(APIView):
+    permission_classes = (IsAuthenticated, IsSubscribedToCreator)
+    queryset = Content.objects.filter(content_type=ContentType.PAID)
+
+    def post(self, request, *args, **kwargs):  # noqa: ARG002
+        content = self.get_object()
+        payer = request.user
+        if payer.wallet.balance < content.price:
+            return error_response(
+                errors=None,
+                status_code=status.HTTP_400_BAD_REQUEST,
+                message='Insufficient balance to purchase this content.',
+            )
+
+        with transaction.atomic():
+            payer.wallet.transfer(amount=content.price, recipient=content.creator)
+            Transaction.create_payment_for_content(amount=content.price, creator=content.creator, subscriber=payer)
+
+            content.purchases.add(payer)
+
+        return success_response('Content paid for successfully')
+
+    def get_object(self):
+        if getattr(self, 'swagger_fake_view', False):
+            return self.queryset.none()
+
+        obj = self.queryset.get(id=self.kwargs['content_id'])
+        for permission in self.get_permissions():
+            if not permission.has_object_permission(self.request, self, obj):
+                self.permission_denied(
+                    self.request,
+                    message=getattr(permission, 'message', None),
+                    code=getattr(permission, 'code', None),
+                )
+
+        return obj
+
+
 class LivestreamView(GenericAPIView, ListModelMixin):
     permission_classes = (IsAuthenticated,)
     pagination_class = CustomCursorPagination
     serializer_class = LiveStreamSerializer
 
     def get_queryset(self):
-        return Livestream.objects.filter(account=self.request.user).order_by('-created_at')
+        return Livestream.objects.filter(creator=self.request.user).order_by('-created_at')
 
     def post(self, request, *args, **kwargs):  # noqa: ARG002
         serializer = self.get_serializer(data=self.request.data)
@@ -105,9 +149,9 @@ class LivestreamView(GenericAPIView, ListModelMixin):
     def patch(self, request, stream_id):
         stream = get_object_or_404(self.get_queryset(), id=stream_id)
         serializer = self.get_serializer(
+            partial=True,
             instance=stream,
             data=request.data,
-            partial=True,
         )
         serializer.is_valid(raise_exception=True)
         serializer.save()
@@ -121,28 +165,51 @@ class LivestreamView(GenericAPIView, ListModelMixin):
 class JoinLivestreamView(APIView):
     permission_classes = (IsAuthenticated,)
 
+    @staticmethod
+    def is_subscribed(creator, subscriber):
+        if creator == subscriber:
+            return True
+
+        subscription_detail_qs = SubscriptionDetail.objects.filter(
+            creator=creator,
+            subscriber=subscriber,
+            expires_at__lte=timezone.now(),
+            status=SubscriptionDetailStatus.ACTIVE,
+        )
+        return subscription_detail_qs.exists()
+
     def get(self, request, stream_id):
         stream = get_object_or_404(Livestream.objects.all(), id=stream_id)
-        role = Role.PUBLISHER if stream.account == self.request.user else Role.SUBSCRIBER
+        if not self.is_subscribed(creator=stream.creator, subscriber=self.request.user):
+            return error_response(
+                errors=None,
+                status_code=status.HTTP_403_FORBIDDEN,
+                message='You are not subscribed to this creator',
+            )
+
+        role = Role.PUBLISHER if stream.creator == self.request.user else Role.SUBSCRIBER
         token_builder = RtcTokenBuilder()
         token_expiration = (stream.start + stream.duration).timestamp()
         token = token_builder.build_token_with_user_account(
-            settings.AGORA_APP_ID,
-            settings.AGORA_APP_CERTIFICATE,
-            str(stream.id),
-            request.user.address,
-            role,
-            token_expiration,
-            token_expiration,
+            role=role,
+            channel_name=str(stream.id),
+            account=request.user.address,
+            app_id=settings.AGORA_APP_ID,
+            token_expire=token_expiration,
+            privilege_expire=token_expiration,
+            app_certificate=settings.AGORA_APP_CERTIFICATE,
         )
         return success_response({'token': token, 'channel_name': str(stream.id), 'user_account': request.user.address})
 
 
 class LikesAPIView(APIView):
     queryset = Content.objects.get_queryset()
-    permission_classes = (IsAuthenticated, IsSubscribedToContent)
+    permission_classes = (IsAuthenticated, IsSubscribedToCreator, IsSubscribedToContent)
 
     def get_object(self):
+        if getattr(self, 'swagger_fake_view', False):
+            return self.queryset.none()
+
         obj = self.queryset.get(id=self.kwargs['content_id'])
         for permission in self.get_permissions():
             if not permission.has_object_permission(self.request, self, obj):
@@ -170,16 +237,15 @@ class LikesAPIView(APIView):
 
 
 class CreateCommentAPIVIew(GenericAPIView):
-    lookup_field = 'id'
-    serializer_class = CommentSerializer
     queryset = Content.objects.get_queryset()
-    permission_classes = (IsAuthenticated, IsSubscribedToContent)
+    serializer_class = CreateCommentSerializer
+    permission_classes = (IsAuthenticated, IsSubscribedToCreator, IsSubscribedToContent)
 
     def get_object(self):
         if getattr(self, 'swagger_fake_view', False):
             return self.queryset.none()
 
-        obj = self.queryset.get(id=self.kwargs['content_id'])
+        obj = self.get_queryset().get(id=self.kwargs['content_id'])
         for permission in self.get_permissions():
             if not permission.has_object_permission(self.request, self, obj):
                 self.permission_denied(
@@ -202,7 +268,7 @@ class CreateCommentAPIVIew(GenericAPIView):
         return context
 
 
-class DeleteCommentAPIView(GenericAPIView):
+class DeleteCommentAPIView(APIView):
     queryset = Comment.objects.get_queryset()
     permission_classes = (IsAuthenticated, IsCommentOwner)
 
@@ -213,8 +279,20 @@ class DeleteCommentAPIView(GenericAPIView):
         return success_response(None, status_code=status.HTTP_204_NO_CONTENT)
 
     def get_object(self):
-        return Comment.objects.get(
+        if getattr(self, 'swagger_fake_view', False):
+            return self.queryset.none()
+
+        obj = self.queryset.get(
             author=self.request.user,
             id=self.kwargs['comment_id'],
             content_id=self.kwargs['content_id'],
         )
+        for permission in self.get_permissions():
+            if not permission.has_object_permission(self.request, self, obj):
+                self.permission_denied(
+                    self.request,
+                    message=getattr(permission, 'message', None),
+                    code=getattr(permission, 'code', None),
+                )
+
+        return obj

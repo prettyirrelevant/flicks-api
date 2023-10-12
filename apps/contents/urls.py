@@ -7,14 +7,17 @@ from .views import (
     PreSignedURLView,
     JoinLivestreamView,
     CreateCommentAPIVIew,
+    DeleteCommentAPIView,
+    PayForContentAPIView,
 )
 
 urlpatterns = [
     path('', ContentView.as_view(), name='content'),
+    path('<uuid:content_id>/pay', PayForContentAPIView.as_view(), name='pay-for-content'),
     path('<uuid:content_id>/comments', CreateCommentAPIVIew.as_view(), name='create-comment'),
     path(
         '<uuid:content_id>/comments/<uuid:comment_id>',
-        CreateCommentAPIVIew.as_view(),
+        DeleteCommentAPIView.as_view(),
         name='delete-comment',
     ),
     path('livestreams', LivestreamView.as_view(), name='livestream-view'),
