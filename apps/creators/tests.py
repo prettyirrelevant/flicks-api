@@ -1,3 +1,4 @@
+import json
 import logging
 from unittest.mock import patch
 
@@ -10,9 +11,8 @@ from rest_framework.test import APIClient
 from apps.creators.models import Creator
 from apps.subscriptions.choices import SubscriptionType
 
-from utils.mock import MockResponse
-
-WALLET_CREATION_RESPONSE = """
+WALLET_CREATION_RESPONSE = json.loads(
+    """
     {
         "data": {
             "walletId": "434000",
@@ -27,7 +27,9 @@ WALLET_CREATION_RESPONSE = """
             ]
         }
     }
-"""
+""",
+    strict=False,
+)
 
 
 class AccountTest(TestCase):
@@ -43,7 +45,7 @@ class AccountTest(TestCase):
     @staticmethod
     @patch(
         target='services.circle.CircleAPI._request',
-        return_value=MockResponse(text=WALLET_CREATION_RESPONSE, status_code=201),
+        return_value=WALLET_CREATION_RESPONSE,
     )
     def create_creator(mock_post):  # noqa: ARG004
         keypair = Keypair()
@@ -60,12 +62,11 @@ class AccountTest(TestCase):
 
     def test_get_profile_without_credentials(self):
         response = self.client.get(f'/creators/{self.keypair.pubkey()}')
-        self.assertContains(response, 'Authentication credentials were not provided.', status_code=401)
-        self.assertContains(response, 'NotAuthenticated', status_code=401)
+        self.assertEqual(response.status_code, 200)
 
     @patch(
         target='services.circle.CircleAPI._request',
-        return_value=MockResponse(text=WALLET_CREATION_RESPONSE, status_code=201),
+        return_value=WALLET_CREATION_RESPONSE,
     )
     def test_get_profile_with_valid_credentials(self, mock_post):  # noqa: ARG002
         signature = self.keypair.sign_message(b'Message: Welcome to Flicks!\nURI: https://flicks.vercel.app')

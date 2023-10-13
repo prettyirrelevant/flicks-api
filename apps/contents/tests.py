@@ -16,8 +16,6 @@ from apps.creators.models import Creator
 from apps.subscriptions.choices import SubscriptionType
 from apps.creators.tests import WALLET_CREATION_RESPONSE
 
-from utils.mock import MockResponse
-
 from .models import Content, Livestream
 
 
@@ -36,7 +34,7 @@ class ContentsTest(TestCase):
     @staticmethod
     @patch(
         target='services.circle.CircleAPI._request',
-        return_value=MockResponse(text=WALLET_CREATION_RESPONSE, status_code=201),
+        return_value=WALLET_CREATION_RESPONSE,
     )
     def create_creator(mock_post):  # noqa: ARG004
         keypair = Keypair()
@@ -58,7 +56,7 @@ class ContentsTest(TestCase):
 
     @patch(
         target='services.circle.CircleAPI._request',
-        return_value=MockResponse(text=WALLET_CREATION_RESPONSE, status_code=201),
+        return_value=WALLET_CREATION_RESPONSE,
     )
     def test_generate_presigned_url_unsupported_file(self, mock_post):  # noqa: ARG002
         response = self.client.post(
@@ -71,7 +69,7 @@ class ContentsTest(TestCase):
 
     @patch(
         target='services.circle.CircleAPI._request',
-        return_value=MockResponse(text=WALLET_CREATION_RESPONSE, status_code=201),
+        return_value=WALLET_CREATION_RESPONSE,
     )
     def test_generate_presigned_url_max_uploads_exceeded(self, mock_post):  # noqa: ARG002
         response = self.client.post(
@@ -97,7 +95,7 @@ class ContentsTest(TestCase):
 
     @patch(
         target='services.circle.CircleAPI._request',
-        return_value=MockResponse(text=WALLET_CREATION_RESPONSE, status_code=201),
+        return_value=WALLET_CREATION_RESPONSE,
     )
     def test_generate_presigned_url_success(self, mock_post):  # noqa: ARG002
         data = {
@@ -117,7 +115,7 @@ class ContentsTest(TestCase):
 
     @patch(
         target='services.circle.CircleAPI._request',
-        return_value=MockResponse(text=WALLET_CREATION_RESPONSE, status_code=201),
+        return_value=WALLET_CREATION_RESPONSE,
     )
     def test_content_view(self, mock_post):  # noqa: ARG002
         # Create Content No Auth
@@ -220,7 +218,7 @@ class ContentsTest(TestCase):
 
     @patch(
         target='services.circle.CircleAPI._request',
-        return_value=MockResponse(text=WALLET_CREATION_RESPONSE, status_code=201),
+        return_value=WALLET_CREATION_RESPONSE,
     )
     def test_livestream_view(self, mock_post):  # noqa: ARG002
         # Create Livestream With Future Start
