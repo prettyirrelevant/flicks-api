@@ -108,7 +108,7 @@ class WalletDepositAddress(UUIDModel, TimestampedModel, models.Model):
         db_index=False,
         blank=False,
     )
-    address = models.CharField('address', unique=True, max_length=200, blank=False)
+    address = models.CharField('address', max_length=200, blank=False)
     blockchain = models.CharField('blockchain', max_length=100, choices=Blockchain.choices, blank=False)
 
     class Meta:
