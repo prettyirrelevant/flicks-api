@@ -5,6 +5,7 @@ from huey.contrib.djhuey import db_task, lock_task, db_periodic_task
 
 from django.conf import settings
 from django.db import transaction
+from django.db.models import Count
 
 from apps.transactions.models import Transaction
 from apps.transactions.choices import TransactionType, TransactionStatus
@@ -73,3 +74,27 @@ def move_funds_to_master_wallet():
             metadata=move_to_master_wallet_response['data'],
             reference=move_to_master_wallet_response['data']['id'],
         )
+
+
+@db_periodic_task(crontab(minute='*/2'))
+def periodically_check_for_wallets_without_deposit_addresses():
+    wallet_without_addresses = Wallet.objects.annotate(deposit_addresses_count=Count('deposit_addresses')).filter(
+        deposit_addresses_count__lt=len(Blockchain),
+    )
+    with transaction.atomic():
+        for wallet in wallet_without_addresses:
+            for blockchain in Blockchain:
+                if wallet.deposit_addresses.filter(blockchain=blockchain).exists():
+                    continue
+
+                response = circle_api.create_address_for_wallet(wallet_id=wallet.provider_id, chain=blockchain.value)
+                if response is None:
+                    raise Exception(  # noqa: TRY002  # pylint: disable=broad-exception-raised
+                        f'Unable to create {blockchain.value} address for wallet {wallet.creator.address}',
+                    )
+
+                WalletDepositAddress.objects.create(
+                    wallet=wallet,
+                    blockchain=blockchain,
+                    address=response['data']['address'],
+                )
