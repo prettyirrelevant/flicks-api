@@ -25,13 +25,13 @@ class CreatorCreationAPIView(GenericAPIView):
         serializer.is_valid(raise_exception=True)
 
         Creator.objects.create(**serializer.validated_data)
-        return success_response('Creator created successfully.')
+        return success_response('Creator created successfully.', status_code=status.HTTP_201_CREATED)
 
 
 class CreatorAPIView(RetrieveAPIView):
     lookup_field = 'address'
     serializer_class = CreatorSerializer
-    permission_classes = (IsAuthenticated,)
+    permission_classes: ClassVar[list] = []
     queryset = Creator.objects.select_related(
         'wallet',
     ).prefetch_related(
@@ -48,7 +48,7 @@ class CreatorAPIView(RetrieveAPIView):
 
     def get_object(self):
         qs = self.get_queryset()
-        obj = get_object_or_404(qs, address=self.request.user.address)
+        obj = get_object_or_404(qs, address=self.kwargs['address'])
         self.check_object_permissions(self.request, obj)
 
         return obj
