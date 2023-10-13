@@ -31,6 +31,14 @@ class Content(UUIDModel, TimestampedModel, models.Model):
     def __str__(self):
         return f'{self.creator.address} - {self.caption}'
 
+    @property
+    def likes_count(self):
+        return self.likes.count()
+
+    @property
+    def comments_count(self):
+        return self.comments.count()
+
 
 class Media(UUIDModel, TimestampedModel, models.Model):
     content = models.ForeignKey(

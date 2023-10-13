@@ -7,7 +7,7 @@ from django.utils import timezone
 from rest_framework import status
 from rest_framework.views import APIView
 from rest_framework.mixins import ListModelMixin
-from rest_framework.generics import GenericAPIView, get_object_or_404
+from rest_framework.generics import ListAPIView, GenericAPIView, get_object_or_404
 
 from apps.transactions.models import Transaction
 from apps.creators.permissions import IsAuthenticated
@@ -29,6 +29,7 @@ from .serializers import (
     CreateCommentSerializer,
     CreateContentSerializer,
     UpdateContentSerializer,
+    TimelineContentSerializer,
     PreSignedURLListSerializer,
 )
 
@@ -296,3 +297,15 @@ class DeleteCommentAPIView(APIView):
                 )
 
         return obj
+
+
+class TimelineView(ListAPIView):
+    permission_classes = (IsAuthenticated,)
+    serializer_class = TimelineContentSerializer
+    pagination_class = CustomCursorPagination
+
+    def get_queryset(self):
+        subscribed_creators = self.request.user.subscriptions.filter(status=SubscriptionDetailStatus.ACTIVE).values(
+            'creator',
+        )
+        return Content.objects.filter(creator__in=subscribed_creators).order_by('-created_at')
