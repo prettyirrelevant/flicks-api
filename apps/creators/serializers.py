@@ -92,7 +92,7 @@ class MinimalCreatorSerializer(serializers.ModelSerializer):
 class CreatorCreationSerializer(serializers.Serializer):
     image_url = serializers.URLField(required=True)
     banner_url = serializers.URLField(required=True)
-    bio = serializers.CharField(max_length=200, required=False)
+    bio = serializers.CharField(max_length=200, default='')
     address = serializers.CharField(max_length=44, required=True)
     moniker = serializers.CharField(max_length=5000, required=True)
 
