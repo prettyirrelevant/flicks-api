@@ -90,11 +90,11 @@ class MinimalCreatorSerializer(serializers.ModelSerializer):
 
 
 class CreatorCreationSerializer(serializers.Serializer):
-    image_url = serializers.URLField(required=True)
-    banner_url = serializers.URLField(required=True)
-    bio = serializers.CharField(max_length=200, default='')
-    address = serializers.CharField(max_length=44, required=True)
-    moniker = serializers.CharField(max_length=5000, required=True)
+    image_url = serializers.URLField()
+    banner_url = serializers.URLField()
+    address = serializers.CharField(max_length=44)
+    moniker = serializers.CharField(max_length=5000)
+    bio = serializers.CharField(max_length=200, allow_blank=True, default='')
 
     def validate_address(self, value):  # noqa: PLR6301
         public_key = Pubkey.from_string(value)
