@@ -17,9 +17,11 @@ class RequestMixin:
         data: dict[str, Any] | None = None,
     ) -> Optional[requests.Response]:
         headers = {
-            'Authorization': f'Bearer {self.api_key}',
             'Content-Type': 'application/json',
         }
+        if self.api_key is not None:
+            headers['Authorization'] = f'Bearer {self.api_key}'
+
         url = f'{self.base_url}/{endpoint}'
         try:
             response = self.session.request(method, url, params=params, json=data, headers=headers)

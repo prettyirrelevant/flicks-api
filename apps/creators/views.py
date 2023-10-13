@@ -81,7 +81,7 @@ class SearchCreatorsAPIView(APIView):
 
 
 class MonikerAvailabilityAPIView(APIView):
-    permission_classes = []
+    permission_classes: ClassVar[list] = []
 
     @swagger_auto_schema(
         manual_parameters=[
