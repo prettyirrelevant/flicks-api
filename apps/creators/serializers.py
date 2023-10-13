@@ -1,10 +1,11 @@
 from solders.pubkey import Pubkey
 
 from django.conf import settings
+from django.utils import timezone
 
 from rest_framework import serializers
 
-from apps.subscriptions.choices import SubscriptionType
+from apps.subscriptions.choices import SubscriptionType, SubscriptionDetailStatus
 
 from services.sharingan import SharinganService
 
@@ -35,7 +36,7 @@ class CreatorSerializer(serializers.ModelSerializer):
         return obj.contents.count()
 
     def get_subscribers_count(self, obj):  # noqa: PLR6301
-        return obj.subscribers.count()
+        return obj.subscribers.filter(status=SubscriptionDetailStatus.ACTIVE, expires_at__gte=timezone.now()).count()
 
     def get_subscription_info(self, obj):  # noqa: PLR6301
         if obj.subscription_type == SubscriptionType.NFT:
@@ -126,5 +127,7 @@ class CreatorCreationSerializer(serializers.Serializer):
 
         attrs['is_verified'] = is_verified
         attrs['social_links'] = social_links
+        attrs['moniker'] = attrs['moniker'].lower()
         attrs['subscription_type'] = SubscriptionType.FREE
+
         return attrs
