@@ -3,6 +3,7 @@ from django.urls import path
 from .views import (
     ContentView,
     LikesAPIView,
+    TimelineView,
     LivestreamView,
     PreSignedURLView,
     JoinLivestreamView,
@@ -21,6 +22,7 @@ urlpatterns = [
         name='delete-comment',
     ),
     path('livestreams', LivestreamView.as_view(), name='livestream-view'),
+    path('timeline', TimelineView.as_view(), name='timeline-view'),
     path('livestreams/<uuid:stream_id>', LivestreamView.as_view(), name='update-livestream-view'),
     path('livestreams/<uuid:stream_id>/join', JoinLivestreamView.as_view(), name='join-livestream'),
     path('get-upload-urls', PreSignedURLView.as_view(), name='presigned-urls'),

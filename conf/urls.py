@@ -32,6 +32,7 @@ urlpatterns = [
     path('webhooks/', include('apps.webhooks.urls')),
     path('contents/', include('apps.contents.urls')),
     path('subscriptions/', include('apps.subscriptions.urls')),
+    path('transactions/', include('apps.transactions.urls')),
     path('docs', docs_schema_view.with_ui('swagger', cache_timeout=0)),
 ]
 

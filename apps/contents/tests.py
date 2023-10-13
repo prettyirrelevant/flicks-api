@@ -14,7 +14,8 @@ from rest_framework.test import APIClient
 
 from apps.creators.models import Creator
 from apps.subscriptions.choices import SubscriptionType
-from apps.creators.tests import WALLET_CREATION_RESPONSE
+from apps.creators.tests import WALLET_CREATION_RESPONSE, WALLET_CREATION_RESPONSE_2
+from apps.subscriptions.models import FreeSubscription, SubscriptionDetail, SubscriptionDetailStatus
 
 from .models import Content, Livestream
 
@@ -22,7 +23,7 @@ from .models import Content, Livestream
 class ContentsTest(TestCase):
     def setUp(self):
         self.client = APIClient()
-        self.keypair, self.creator = self.create_creator()  # pylint: disable=no-value-for-parameter
+        self.keypair, self.creator = self.create_creator('bonfida.sol')  # pylint: disable=no-value-for-parameter
         self.message = b'Message: Welcome to Flicks!\nURI: https://flicks.vercel.app'
         self.signature = self.keypair.sign_message(message=self.message)
         self.auth_header = {
@@ -36,10 +37,10 @@ class ContentsTest(TestCase):
         target='services.circle.CircleAPI._request',
         return_value=WALLET_CREATION_RESPONSE,
     )
-    def create_creator(mock_post):  # noqa: ARG004
+    def create_creator(moniker: str, mock_post):  # noqa: ARG004
         keypair = Keypair()
         creator = Creator.objects.create(
-            moniker='bonfida.sol',
+            moniker=moniker,
             image_url='https://google.com',
             banner_url='https://google.com',
             address=str(keypair.pubkey()),
@@ -307,3 +308,75 @@ class ContentsTest(TestCase):
         self.assertEqual(response.json()['data']['user_account'], str(self.keypair.pubkey()))
         self.assertEqual(response.json()['data']['channel_name'], str(livestream.id))
         self.assertIn('token', response.json()['data'])
+
+    @patch(
+        target='services.circle.CircleAPI._request',
+        return_value=WALLET_CREATION_RESPONSE_2,
+    )
+    def test_user_timeline_view(self, mock_post):  # noqa: ARG002
+        # Free Content
+        data = {
+            'caption': 'My First post',
+            'content_type': 'free',
+            'media': [
+                {
+                    'media_type': 'image',
+                    's3_key': 'images/8LnFdWY5KjemEPqXVfco4h7RZubFds9iM7DPpinWZCnG/test.png',
+                    'blur_hash': 'hashyyy',
+                },
+                {
+                    'media_type': 'video',
+                    's3_key': 'videos/vYBRhWTQPJXByU3ED3SpUWSqR3RnJ7eT1vJ6Ckfbuqq/test.mov',
+                    'blur_hash': 'hashyyy',
+                },
+            ],
+        }
+        self.client.post(
+            path='/contents/',
+            data=json.dumps(data),
+            headers=self.auth_header,
+            content_type='application/json',
+        )
+        # Paid Content
+        data['price'] = '1'
+        data['content_type'] = 'paid'
+        data['caption'] = 'My First Paid Content'
+        self.client.post(
+            path='/contents/',
+            data=json.dumps(data),
+            headers=self.auth_header,
+            content_type='application/json',
+        )
+
+        # Create Subscriber
+        keypair = Keypair()
+        user = Creator.objects.create(
+            moniker='bonfida2.sol',
+            image_url='https://google.com',
+            banner_url='https://google.com',
+            address=str(keypair.pubkey()),
+            subscription_type=SubscriptionType.FREE,
+            is_verified=True,
+        )
+        free_subscription = FreeSubscription.objects.get(creator=self.creator)
+        SubscriptionDetail.objects.create(
+            creator=self.creator,
+            subscriber=user,
+            subscription_object=free_subscription,
+            status=SubscriptionDetailStatus.ACTIVE,
+            expires_at=timezone.now() + datetime.timedelta(days=1),
+        )
+        signature = keypair.sign_message(message=self.message)
+        auth_header = {
+            'Authorization': f'Signature {keypair.pubkey()}:{signature}',
+        }
+        response = self.client.get(
+            path='/contents/timeline',
+            headers=auth_header,
+            content_type='application/json',
+        )
+        contents = response.json()['results']
+        for content in contents:
+            if content['content_type'] == 'paid' and content['is_purchased'] is False:
+                for media in content['media']:
+                    self.assertEqual(media['url'], None)

@@ -31,6 +31,26 @@ WALLET_CREATION_RESPONSE = json.loads(
     strict=False,
 )
 
+WALLET_CREATION_RESPONSE_2 = json.loads(
+    """
+    {
+        "data": {
+            "walletId": "434001",
+            "entityId": "fc988ed5-c129-4f70-a064-e5beb7eb8e32",
+            "type": "end_user_wallet",
+            "description": "Treasury Wallet",
+            "balances": [
+                {
+                    "amount": "3.14",
+                    "currency": "USD"
+                }
+            ]
+        }
+    }
+""",
+    strict=False,
+)
+
 
 class AccountTest(TestCase):
     def setUp(self):

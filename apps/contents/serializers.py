@@ -96,26 +96,18 @@ class ContentSerializer(serializers.ModelSerializer):
     creator = MinimalCreatorSerializer()
     comments = CommentSerializer(many=True)
     media = serializers.SerializerMethodField()
-    is_liked = serializers.SerializerMethodField()
-    likes_count = serializers.SerializerMethodField()
-    is_purchased = serializers.SerializerMethodField()
 
     def get_media(self, obj):  # noqa: PLR6301
         qs = obj.media.all()
         return MediaSerializer(qs, many=True).data
 
-    def get_likes_count(self, obj):  # noqa: PLR6301
-        return obj.likes.count()
-
-    def get_is_liked(self, obj):
-        return obj.likes.filter(id=self.context['request'].user.id).exists()
-
-    def get_is_purchased(self, obj):
-        user = self.context['request'].user
-        if user == obj.creator:
-            return True
-
-        return obj.purchases.filter(id=user.id).exists()
+    # def get_likes_count(self, obj):
+    #
+    # def get_is_liked(self, obj):
+    #
+    # def get_is_purchased(self, obj):
+    #     if user == obj.creator:
+    #
 
     class Meta:
         model = Content
@@ -126,11 +118,12 @@ class ContentSerializer(serializers.ModelSerializer):
             'creator',
             'caption',
             'comments',
-            'is_liked',
+            # 'is_liked',
             'created_at',
             'updated_at',
             'likes_count',
-            'is_purchased',
+            'comments_count',
+            # 'is_purchased',
             'content_type',
         )
 
@@ -151,3 +144,53 @@ class LiveStreamSerializer(serializers.ModelSerializer):
         model = Livestream
         fields = ('id', 'creator', 'title', 'description', 'start', 'duration')
         read_only_fields = ('id', 'creator')
+
+
+class TimelineMediaSerializer(serializers.ModelSerializer):
+    url = serializers.SerializerMethodField()
+
+    def get_url(self, obj):
+        if obj.content.content_type == ContentType.FREE or (
+            obj.content.content_type == ContentType.PAID
+            and obj.content.purchases.filter(id=self.context['request'].user.id).exists()
+        ):
+            return obj.url
+        return None
+
+    class Meta:
+        model = Media
+        fields = ('id', 'media_type', 'url', 'blur_hash', 'created_at')
+
+
+class TimelineContentSerializer(serializers.ModelSerializer):
+    creator = MinimalCreatorSerializer()
+    media = TimelineMediaSerializer(many=True)
+    is_liked = serializers.SerializerMethodField()
+    is_purchased = serializers.SerializerMethodField()
+
+    def get_is_liked(self, obj):
+        return obj.likes.filter(id=self.context['request'].user.id).exists()
+
+    def get_is_purchased(self, obj):
+        return (
+            True
+            if obj.content_type == ContentType.FREE
+            else obj.purchases.filter(id=self.context['request'].user.id).exists()
+        )
+
+    class Meta:
+        model = Content
+        fields = (
+            'id',
+            'creator',
+            'caption',
+            'likes_count',
+            'comments_count',
+            'is_liked',
+            'is_purchased',
+            'media',
+            'content_type',
+            'price',
+            'created_at',
+            'updated_at',
+        )
