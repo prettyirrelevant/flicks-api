@@ -1,4 +1,5 @@
 import logging
+import contextlib
 from typing import Any, Literal, Optional
 
 import requests
@@ -16,10 +17,8 @@ class RequestMixin:
         params: dict[str, Any] | None = None,
         data: dict[str, Any] | None = None,
     ) -> Optional[requests.Response]:
-        headers = {
-            'Content-Type': 'application/json',
-        }
-        if self.api_key is not None:
+        headers = {'Content-Type': 'application/json'}
+        with contextlib.suppress(AttributeError):
             headers['Authorization'] = f'Bearer {self.api_key}'
 
         url = f'{self.base_url}/{endpoint}'
