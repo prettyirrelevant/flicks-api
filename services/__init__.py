@@ -16,7 +16,7 @@ class RequestMixin:
         endpoint: str,
         params: dict[str, Any] | None = None,
         data: dict[str, Any] | None = None,
-    ) -> Optional[requests.Response]:
+    ) -> Optional[dict[str, Any]]:
         headers = {'Content-Type': 'application/json'}
         with contextlib.suppress(AttributeError):
             headers['Authorization'] = f'Bearer {self.api_key}'
@@ -29,4 +29,4 @@ class RequestMixin:
             logger.exception('Error occurred while making request to %s with error %s', url, e.response.json())
             return None
 
-        return response
+        return response.json()

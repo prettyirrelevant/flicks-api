@@ -16,11 +16,11 @@ from .models import Media, Comment, Content, Livestream
 
 class PreSignedURLSerializer(serializers.Serializer):
     file_name = serializers.CharField(max_length=50)
-    file_type = serializers.ChoiceField(choices=MediaType.choices, required=True)
+    file_type = serializers.ChoiceField(choices=MediaType.choices)
 
 
 class PreSignedURLListSerializer(serializers.Serializer):
-    files = PreSignedURLSerializer(required=True, many=True)
+    files = PreSignedURLSerializer(many=True)
 
     def validate_files(self, value):  # noqa: PLR6301
         if len(value) > settings.MAX_FILE_UPLOAD_PER_REQUEST:
@@ -73,7 +73,7 @@ class UpdateContentSerializer(serializers.ModelSerializer):
 
 
 class CreateCommentSerializer(serializers.Serializer):
-    message = serializers.CharField(max_length=200, required=True)
+    message = serializers.CharField(max_length=200)
 
     def create(self, validated_data):
         return Comment.objects.create(

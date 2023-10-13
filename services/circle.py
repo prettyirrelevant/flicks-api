@@ -12,7 +12,7 @@ class CircleAPI(RequestMixin):
 
     def ping(self) -> bool:
         response = self._request('GET', 'ping')
-        return response.json().get('message') == 'pong'
+        return response.get('message') == 'pong'
 
     def make_withdrawal(
         self,
@@ -21,7 +21,7 @@ class CircleAPI(RequestMixin):
         destination_address: str,
         chain: str,
     ) -> dict[str, Any]:
-        response = self._request(
+        return self._request(
             method='POST',
             endpoint='v1/transfers',
             data={
@@ -38,7 +38,6 @@ class CircleAPI(RequestMixin):
                 'amount': {'amount': str(amount), 'currency': 'USD'},
             },
         )
-        return response.json()
 
     def move_to_master_wallet(
         self,
@@ -46,7 +45,7 @@ class CircleAPI(RequestMixin):
         master_wallet_id: int,
         wallet_id: str,
     ) -> dict[str, Any]:
-        response = self._request(
+        return self._request(
             method='POST',
             endpoint='v1/transfers',
             data={
@@ -62,10 +61,9 @@ class CircleAPI(RequestMixin):
                 'amount': {'amount': str(amount), 'currency': 'USD'},
             },
         )
-        return response.json()
 
     def create_wallet(self, idempotency_key: uuid.UUID, address: str) -> dict[str, Any]:
-        response = self._request(
+        return self._request(
             method='POST',
             endpoint='v1/wallets',
             data={
@@ -73,10 +71,9 @@ class CircleAPI(RequestMixin):
                 'description': f'Deposit wallet for {address}',
             },
         )
-        return response.json()
 
     def create_address_for_wallet(self, wallet_id: str, chain: str) -> dict[str, Any]:
-        response = self._request(
+        return self._request(
             method='POST',
             endpoint=f'v1/wallets/{wallet_id}/addresses',
             data={
@@ -85,18 +82,15 @@ class CircleAPI(RequestMixin):
                 'chain': chain,
             },
         )
-        return response.json()
 
     def get_wallet_info(self, wallet_id: str) -> dict[str, Any]:
-        response = self._request(
+        return self._request(
             method='GET',
             endpoint=f'v1/wallets/{wallet_id}',
         )
-        return response.json()
 
     def get_withdrawal_info(self, withdrawal_id: str) -> dict[str, Any]:
-        response = self._request(
+        return self._request(
             method='GET',
             endpoint=f'v1/transfers/{withdrawal_id}',
         )
-        return response.json()
