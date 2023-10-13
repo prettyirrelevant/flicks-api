@@ -4,6 +4,7 @@ from drf_yasg import openapi
 from drf_yasg.utils import swagger_auto_schema
 
 from django.db.models import Q
+from django.db import IntegrityError
 
 from rest_framework.views import APIView
 from rest_framework import status, serializers
@@ -24,7 +25,11 @@ class CreatorCreationAPIView(GenericAPIView):
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
 
-        Creator.objects.create(**serializer.validated_data)
+        try:
+            Creator.objects.create(**serializer.validated_data)
+        except IntegrityError as e:
+            return error_response(str(e), status_code=status.HTTP_409_CONFLICT)
+
         return success_response('Creator created successfully.', status_code=status.HTTP_201_CREATED)
 
 
