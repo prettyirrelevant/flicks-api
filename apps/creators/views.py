@@ -1,10 +1,10 @@
 from typing import ClassVar
 
-from django.db import IntegrityError
 from drf_yasg import openapi
 from drf_yasg.utils import swagger_auto_schema
 
 from django.db.models import Q
+from django.db import IntegrityError
 
 from rest_framework.views import APIView
 from rest_framework import status, serializers
