@@ -25,7 +25,7 @@ class CreatorCreationAPIView(GenericAPIView):
         serializer.is_valid(raise_exception=True)
 
         Creator.objects.create(**serializer.validated_data)
-        return success_response('Creator created successfully.')
+        return success_response('Creator created successfully.', status_code=status.HTTP_201_CREATED)
 
 
 class CreatorAPIView(RetrieveAPIView):
