@@ -8,13 +8,13 @@ from rest_framework.permissions import AllowAny
 
 from utils.responses import success_response
 
-from .parsers import PlainTextParser
 from .models import Webhook, WebhookType, WebhookStatus
+from .parsers import LowerCasePlainTextParser, UpperCasePlainTextParser
 
 
 class WebhookView(APIView):
     permission_classes = (AllowAny,)
-    parser_classes = (PlainTextParser,)
+    parser_classes = (LowerCasePlainTextParser, UpperCasePlainTextParser)
 
     def post(self, request, *args, **kwargs):  # noqa: PLR6301 ARG002
         data = json.loads(request.data.decode('utf-8'), strict=False)

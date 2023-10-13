@@ -34,11 +34,13 @@ class CreatorAPIView(RetrieveAPIView):
     permission_classes = (IsAuthenticated,)
     queryset = Creator.objects.select_related(
         'wallet',
+    ).prefetch_related(
+        'wallet__deposit_addresses',
         'contents',
         'subscribers',
         'nft_subscriptions',
         'monetary_subscriptions',
-    ).prefetch_related('wallet__deposit_addresses')
+    )
 
     def retrieve(self, request, *args, **kwargs):  # noqa: PLR6301
         response = super().retrieve(request, *args, **kwargs)
