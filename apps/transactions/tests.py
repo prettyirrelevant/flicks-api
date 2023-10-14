@@ -49,3 +49,4 @@ class TransactionsTest(TestCase):
     def test_transactions_view(self, mock_post):  # noqa: ARG002
         response = self.client.get(path='/transactions/', headers=self.auth_header)
         self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json(), {'data': {'next': None, 'previous': None, 'results': []}})
