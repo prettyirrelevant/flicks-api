@@ -6,6 +6,7 @@ from .views import (
     TimelineView,
     LivestreamView,
     PreSignedURLView,
+    ContentListAPIView,
     JoinLivestreamView,
     CreateCommentAPIVIew,
     DeleteCommentAPIView,
@@ -14,6 +15,7 @@ from .views import (
 
 urlpatterns = [
     path('', ContentView.as_view(), name='content'),
+    path('creators/<str:address>', ContentListAPIView.as_view(), name='creators-content'),
     path('<uuid:content_id>/pay', PayForContentAPIView.as_view(), name='pay-for-content'),
     path('<uuid:content_id>/comments', CreateCommentAPIVIew.as_view(), name='create-comment'),
     path(

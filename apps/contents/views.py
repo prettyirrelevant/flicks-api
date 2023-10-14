@@ -29,7 +29,6 @@ from .serializers import (
     CreateCommentSerializer,
     CreateContentSerializer,
     UpdateContentSerializer,
-    TimelineContentSerializer,
     PreSignedURLListSerializer,
 )
 
@@ -62,19 +61,23 @@ class PreSignedURLView(GenericAPIView):
         return success_response(response_data)
 
 
-class ContentView(GenericAPIView, ListModelMixin):
+class ContentView(GenericAPIView):
+    queryset = Content.objects.get_queryset()
     permission_classes = (IsAuthenticated,)
     pagination_class = CustomCursorPagination
 
     def get_serializer_class(self):
         if self.request.method == 'POST':
             return CreateContentSerializer
+
         if self.request.method == 'PATCH':
             return UpdateContentSerializer
-        return ContentSerializer
+
+        return super().get_serializer_class()
 
     def get_queryset(self):
-        return Content.objects.filter(creator=self.request.user).prefetch_related('media').order_by('-created_at')
+        qs = super().get_queryset()
+        return qs.filter(creator=self.request.user).order_by('-created_at')
 
     def post(self, request, *args, **kwargs):  # noqa: ARG002
         serializer = self.get_serializer(data=request.data)
@@ -90,9 +93,24 @@ class ContentView(GenericAPIView, ListModelMixin):
         serializer.save()
         return success_response({'message': 'content updated successfully'})
 
-    def get(self, request, *args, **kwargs):
-        response = self.list(request, *args, **kwargs)
-        return success_response(response.data)
+
+class ContentListAPIView(ListAPIView):
+    serializer_class = ContentSerializer
+    permission_classes = (IsAuthenticated,)
+    queryset = Content.objects.get_queryset()
+    pagination_class = CustomCursorPagination
+
+    def get_queryset(self):
+        qs = super().get_queryset()
+        if getattr(self, 'swagger_fake_view', False):
+            return qs.none()
+
+        address = self.kwargs['address']
+        return qs.filter(creator__address=address)
+
+    def get(self, request, *args, **kwargs):  # noqa: PLR6301
+        response = super().get(request, *args, **kwargs)
+        return success_response(response.data, response.status_code)
 
 
 class PayForContentAPIView(APIView):
@@ -300,8 +318,8 @@ class DeleteCommentAPIView(APIView):
 
 
 class TimelineView(ListAPIView):
+    serializer_class = ContentSerializer
     permission_classes = (IsAuthenticated,)
-    serializer_class = TimelineContentSerializer
     pagination_class = CustomCursorPagination
 
     def get_queryset(self):
