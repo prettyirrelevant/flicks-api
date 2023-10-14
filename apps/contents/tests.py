@@ -211,7 +211,7 @@ class ContentsTest(TestCase):
 
         # Fetch my Content View
         response = self.client.get(
-            path='/contents/',
+            path=f'/contents/creators/{self.keypair.pubkey()}',
             headers=self.auth_header,
         )
         self.assertEqual(response.status_code, 200)
