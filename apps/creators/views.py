@@ -28,7 +28,7 @@ class CreatorCreationAPIView(GenericAPIView):
         try:
             Creator.objects.create(**serializer.validated_data)
         except IntegrityError as e:
-            return error_response(str(e), status_code=status.HTTP_409_CONFLICT)
+            return error_response(str(e), status_code=status.HTTP_409_CONFLICT, errors=[])
 
         return success_response('Creator created successfully.', status_code=status.HTTP_201_CREATED)
 
