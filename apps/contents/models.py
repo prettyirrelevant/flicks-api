@@ -48,8 +48,8 @@ class Media(UUIDModel, TimestampedModel, models.Model):
         related_name='media',
         blank=False,
     )
+    blur_hash = models.TextField('media blur hash', default='')
     s3_key = models.CharField(max_length=100, blank=False, verbose_name='file path on s3')
-    blur_hash = models.TextField(blank=False, verbose_name='media blur hash')
     media_type = models.CharField(max_length=20, choices=MediaType.choices, blank=False, verbose_name='media type')
 
     def __str__(self):

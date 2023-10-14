@@ -133,12 +133,10 @@ class ContentsTest(TestCase):
                 {
                     'media_type': 'image',
                     's3_key': 'images/8LnFdWY5KjemEPqXVfco4h7RZubFds9iM7DPpinWZCnG/test.png',
-                    'blur_hash': 'hashyyy',
                 },
                 {
                     'media_type': 'video',
                     's3_key': 'videos/vYBRhWTQPJXByU3ED3SpUWSqR3RnJ7eT1vJ6Ckfbuqq/test.mov',
-                    'blur_hash': 'hashyyy',
                 },
             ],
         }
@@ -322,12 +320,10 @@ class ContentsTest(TestCase):
                 {
                     'media_type': 'image',
                     's3_key': 'images/8LnFdWY5KjemEPqXVfco4h7RZubFds9iM7DPpinWZCnG/test.png',
-                    'blur_hash': 'hashyyy',
                 },
                 {
                     'media_type': 'video',
                     's3_key': 'videos/vYBRhWTQPJXByU3ED3SpUWSqR3RnJ7eT1vJ6Ckfbuqq/test.mov',
-                    'blur_hash': 'hashyyy',
                 },
             ],
         }

@@ -47,8 +47,8 @@ class MediaSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Media
-        fields = ('s3_key', 'media_type', 'url', 'blur_hash', 'created_at', 'updated_at')
-        read_only_fields = ('url', 'created_at', 'updated_at')
+        fields = ('s3_key', 'media_type', 'url', 'created_at', 'updated_at')
+        read_only_fields = ('url', 'blur_hash', 'created_at', 'updated_at')
 
 
 class CreateContentSerializer(serializers.Serializer):
@@ -121,7 +121,7 @@ class ContentSerializer(serializers.ModelSerializer):
         return (
             obj.content_type == ContentType.FREE
             or self.context['request'].user == obj.creator
-            or obj.purchases.filter(id=self.context['request'].user.id).exists(),
+            or obj.purchases.filter(id=self.context['request'].user.id).exists()
         )
 
     class Meta:
