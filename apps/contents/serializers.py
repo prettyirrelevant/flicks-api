@@ -30,10 +30,21 @@ class PreSignedURLListSerializer(serializers.Serializer):
 
 
 class MediaSerializer(serializers.ModelSerializer):
+    url = serializers.SerializerMethodField()
+
+    def get_url(self, obj):
+        if obj.content.content_type == ContentType.FREE or (
+            obj.content.content_type == ContentType.PAID
+            and obj.content.purchases.filter(id=self.context['request'].user.id).exists()
+        ):
+            return obj.url
+
+        return None
+
     class Meta:
         model = Media
-        fields = ('s3_key', 'media_type', 'url', 'blur_hash')
-        read_only_fields = ('url',)
+        fields = ('s3_key', 'media_type', 'url', 'blur_hash', 'created_at', 'updated_at')
+        read_only_fields = ('url', 'created_at', 'updated_at')
 
 
 class CreateContentSerializer(serializers.Serializer):
@@ -93,78 +104,9 @@ class CommentSerializer(serializers.ModelSerializer):
 
 
 class ContentSerializer(serializers.ModelSerializer):
+    media = MediaSerializer(many=True)
     creator = MinimalCreatorSerializer()
     comments = CommentSerializer(many=True)
-    media = serializers.SerializerMethodField()
-
-    def get_media(self, obj):  # noqa: PLR6301
-        qs = obj.media.all()
-        return MediaSerializer(qs, many=True).data
-
-    # def get_likes_count(self, obj):
-    #
-    # def get_is_liked(self, obj):
-    #
-    # def get_is_purchased(self, obj):
-    #     if user == obj.creator:
-    #
-
-    class Meta:
-        model = Content
-        fields = (
-            'id',
-            'price',
-            'media',
-            'creator',
-            'caption',
-            'comments',
-            # 'is_liked',
-            'created_at',
-            'updated_at',
-            'likes_count',
-            'comments_count',
-            # 'is_purchased',
-            'content_type',
-        )
-
-
-class LiveStreamSerializer(serializers.ModelSerializer):
-    start = serializers.DateTimeField(required=False, allow_null=True)
-
-    def validate(self, attrs):
-        now = timezone.now()
-        if attrs.get('start', None) is None:
-            attrs['start'] = now  # instant livestream
-        if attrs['start'] < now:
-            raise serializers.ValidationError(detail={'start': 'invalid start time'})
-        attrs['creator'] = self.context['request'].user
-        return attrs
-
-    class Meta:
-        model = Livestream
-        fields = ('id', 'creator', 'title', 'description', 'start', 'duration')
-        read_only_fields = ('id', 'creator')
-
-
-class TimelineMediaSerializer(serializers.ModelSerializer):
-    url = serializers.SerializerMethodField()
-
-    def get_url(self, obj):
-        if obj.content.content_type == ContentType.FREE or (
-            obj.content.content_type == ContentType.PAID
-            and obj.content.purchases.filter(id=self.context['request'].user.id).exists()
-        ):
-            return obj.url
-        return None
-
-    class Meta:
-        model = Media
-        fields = ('id', 'media_type', 'url', 'blur_hash', 'created_at')
-
-
-class TimelineContentSerializer(serializers.ModelSerializer):
-    creator = MinimalCreatorSerializer()
-    media = TimelineMediaSerializer(many=True)
     is_liked = serializers.SerializerMethodField()
     is_purchased = serializers.SerializerMethodField()
 
@@ -182,15 +124,36 @@ class TimelineContentSerializer(serializers.ModelSerializer):
         model = Content
         fields = (
             'id',
+            'price',
+            'media',
             'creator',
             'caption',
-            'likes_count',
-            'comments_count',
+            'comments',
             'is_liked',
-            'is_purchased',
-            'media',
-            'content_type',
-            'price',
             'created_at',
             'updated_at',
+            'likes_count',
+            'is_purchased',
+            'content_type',
+            'comments_count',
         )
+
+
+class LiveStreamSerializer(serializers.ModelSerializer):
+    start = serializers.DateTimeField(required=False, allow_null=True)
+
+    def validate(self, attrs):
+        now = timezone.now()
+        if attrs.get('start', None) is None:
+            attrs['start'] = now  # instant livestream
+
+        if attrs['start'] < now:
+            raise serializers.ValidationError(detail={'start': 'invalid start time'})
+
+        attrs['creator'] = self.context['request'].user
+        return attrs
+
+    class Meta:
+        model = Livestream
+        fields = ('id', 'creator', 'title', 'description', 'start', 'duration')
+        read_only_fields = ('id', 'creator')
