@@ -33,9 +33,13 @@ class MediaSerializer(serializers.ModelSerializer):
     url = serializers.SerializerMethodField()
 
     def get_url(self, obj):
-        if obj.content.content_type == ContentType.FREE or (
-            obj.content.content_type == ContentType.PAID
-            and obj.content.purchases.filter(id=self.context['request'].user.id).exists()
+        if (
+            obj.content.content_type == ContentType.FREE
+            or self.context['request'].user == obj.content.creator
+            or (
+                obj.content.content_type == ContentType.PAID
+                and obj.content.purchases.filter(id=self.context['request'].user.id).exists()
+            )
         ):
             return obj.url
 
@@ -115,9 +119,9 @@ class ContentSerializer(serializers.ModelSerializer):
 
     def get_is_purchased(self, obj):
         return (
-            True
-            if obj.content_type == ContentType.FREE
-            else obj.purchases.filter(id=self.context['request'].user.id).exists()
+            obj.content_type == ContentType.FREE
+            or self.context['request'].user == obj.creator
+            or obj.purchases.filter(id=self.context['request'].user.id).exists(),
         )
 
     class Meta:
