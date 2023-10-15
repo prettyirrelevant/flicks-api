@@ -47,7 +47,7 @@ def create_deposit_addresses_for_wallet(wallet_id):
 @db_periodic_task(crontab(minute='*/3'))
 @lock_task('move-funds-to-master-wallet-lock')
 def move_funds_to_master_wallet():
-    for wallet in Wallet.objects.filter(balance__gte=MINIMUM_ALLOWED_DEPOSIT_AMOUNT):
+    for wallet in Wallet.objects.all():
         wallet_info_response = circle_api.get_wallet_info(wallet.provider_id)
         if wallet_info_response is None:
             continue
@@ -57,6 +57,9 @@ def move_funds_to_master_wallet():
             continue
 
         amount = Decimal(usd_balance['amount'])
+        if amount < MINIMUM_ALLOWED_DEPOSIT_AMOUNT:
+            continue
+
         move_to_master_wallet_response = circle_api.move_to_master_wallet(
             wallet_id=wallet.provider_id,
             amount=amount,
