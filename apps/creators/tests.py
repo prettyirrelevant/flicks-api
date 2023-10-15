@@ -144,3 +144,15 @@ class AccountTest(TestCase):
         )
         self.assertContains(response, 'String is the wrong size', status_code=401)
         self.assertContains(response, 'AuthenticationFailed', status_code=401)
+
+    @patch(
+        target='services.circle.CircleAPI._request',
+        return_value=WALLET_CREATION_RESPONSE,
+    )
+    def test_get_suggested_creators(self, mock_post):  # noqa: ARG002
+        signature = self.keypair.sign_message(b'Message: Welcome to Flicks!\nURI: https://flicks.vercel.app')
+        response = self.client.get(
+            path='/creators/suggestions',
+            headers={'Authorization': f'Signature {self.keypair.pubkey()}:{signature}'},
+        )
+        self.assertEqual(response.status_code, 200)

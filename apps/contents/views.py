@@ -21,9 +21,10 @@ from utils.pagination import CustomCursorPagination
 from utils.responses import error_response, success_response
 
 from .choices import ContentType
-from .models import Comment, Content, Livestream
+from .models import Media, Comment, Content, Livestream
 from .permissions import IsCommentOwner, IsSubscribedToContent, IsSubscribedToCreator
 from .serializers import (
+    MediaSerializer,
     ContentSerializer,
     LiveStreamSerializer,
     CreateCommentSerializer,
@@ -328,3 +329,35 @@ class TimelineView(ListAPIView):
             'creator',
         )
         return Content.objects.filter(creator__in=subscribed_creators).order_by('-created_at')
+
+
+class MediaView(ListAPIView):
+    serializer_class = MediaSerializer
+    permission_classes = (IsAuthenticated,)
+    pagination_class = CustomCursorPagination
+
+    def get_queryset(self):
+        creator = self.kwargs['address']
+        qs = Media.objects.filter(content__creator__address=creator)
+        return qs.order_by('-created_at')
+
+    def get(self, request, *args, **kwargs):
+        response = self.list(request, args, kwargs)
+        return success_response(response.data)
+
+
+class DiscoverView(ListAPIView):
+    permission_classes = (IsAuthenticated,)
+    serializer_class = ContentSerializer
+    pagination_class = CustomCursorPagination
+
+    def get_queryset(self):
+        return (
+            Content.objects.filter(content_type=ContentType.FREE)
+            .exclude(creator__address=self.request.user.address)
+            .order_by('-created_at')
+        )
+
+    def get(self, request, *args, **kwargs):
+        response = self.list(request, args, kwargs)
+        return success_response(response.data)
