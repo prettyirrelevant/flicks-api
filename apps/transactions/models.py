@@ -1,5 +1,5 @@
 from decimal import Decimal
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 from django.db import models, transaction
 
@@ -38,14 +38,14 @@ class Transaction(UUIDModel, TimestampedModel, models.Model):
             account=creator,
             tx_type=TransactionType.CREDIT,
             status=TransactionStatus.SUCCESSFUL,
-            narration=f'{subscriber.moniker} just paid {amount} USD for subscription',
+            narration=f'@{subscriber.moniker} just paid {amount} USD for subscription',
         )
         subscriber_tx = cls(
             amount=amount,
             account=subscriber,
             tx_type=TransactionType.DEBIT,
             status=TransactionStatus.SUCCESSFUL,
-            narration=f'You just paid {amount} USD to subscribe to {creator.moniker}',
+            narration=f'You just paid {amount} USD to subscribe to @{creator.moniker}',
         )
 
         cls.objects.bulk_create([creator_tx, subscriber_tx])
@@ -58,14 +58,26 @@ class Transaction(UUIDModel, TimestampedModel, models.Model):
             account=creator,
             tx_type=TransactionType.CREDIT,
             status=TransactionStatus.SUCCESSFUL,
-            narration=f'{subscriber.moniker} just paid {amount} USD for your content',
+            narration=f'@{subscriber.moniker} just paid {amount} USD for your content',
         )
         subscriber_tx = cls(
             amount=amount,
             account=subscriber,
             tx_type=TransactionType.DEBIT,
             status=TransactionStatus.SUCCESSFUL,
-            narration=f'You just paid {amount} USD to view a content from {creator.moniker}',
+            narration=f'You just paid {amount} USD to view a content from @{creator.moniker}',
         )
 
         cls.objects.bulk_create([creator_tx, subscriber_tx])
+
+    @classmethod
+    @transaction.atomic()
+    def create_withdrawal(cls, creator: 'Creator', amount: Decimal, metadata: dict[str, Any]):
+        cls.objects.create(
+            amount=amount,
+            account=creator,
+            metadata=metadata,
+            tx_type=TransactionType.DEBIT,
+            status=TransactionStatus.PENDING,
+            narration=f'You just withdrew {amount} USD from your wallet',
+        )

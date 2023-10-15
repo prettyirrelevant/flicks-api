@@ -4,15 +4,24 @@ from drf_yasg import openapi
 from drf_yasg.utils import swagger_auto_schema
 
 from django.db.models import Q
-from django.db import IntegrityError
+from django.conf import settings
+from django.db import IntegrityError, transaction
 
 from rest_framework.views import APIView
 from rest_framework import status, serializers
 from rest_framework.generics import GenericAPIView, RetrieveAPIView, get_object_or_404
 
+from apps.transactions.models import Transaction
+from apps.contents.serializers import WithdrawalSerializer
+
+from services.circle import CircleAPI
+
+from utils.constants import PERCENTAGE_CUT_FROM_WITHDRAWALS
 from utils.responses import error_response, success_response
 
 from .models import Creator
+from .choices import Blockchain
+from .exceptions import BadGatewayError
 from .permissions import IsAuthenticated
 from .serializers import CreatorSerializer, MinimalCreatorSerializer, CreatorCreationSerializer
 
@@ -108,3 +117,38 @@ class MonikerAvailabilityAPIView(APIView):
             return error_response(message='Moniker is already taken.', errors=[], status_code=status.HTTP_409_CONFLICT)
 
         return success_response(data='Moniker is available to use.')
+
+
+class CreatorWithdrawalAPIView(GenericAPIView):
+    permission_classes = (IsAuthenticated,)
+    serializer_class = WithdrawalSerializer
+    queryset = Creator.objects.get_queryset()
+
+    def post(self, request, *args, **kwargs):  # noqa: ARG002
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+        amount = serializer.validated_data['amount']
+        with transaction.atomic():
+            self.request.user.wallet.withdraw(amount)
+            circle_api = CircleAPI(
+                api_key=settings.CIRCLE_API_KEY,
+                base_url=settings.CIRCLE_BASE_URL,
+            )
+
+            withdrawal_response = circle_api.make_withdrawal(
+                chain=Blockchain.SOLANA.value,
+                amount=PERCENTAGE_CUT_FROM_WITHDRAWALS * amount,
+                destination_address=self.request.user.address,
+                master_wallet_id=settings.CIRCLE_MASTER_WALLET_ID,
+            )
+            if withdrawal_response is None:
+                raise BadGatewayError('Unable to process your withdrawal at this time. Please try again later.')
+
+            Transaction.create_withdrawal(
+                amount=amount,
+                creator=self.request.user,
+                metadata=withdrawal_response['data'],
+            )
+
+        return success_response('Withdrawal is being processed.')
