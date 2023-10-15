@@ -376,3 +376,68 @@ class ContentsTest(TestCase):
             if content['content_type'] == 'paid' and content['is_purchased'] is False:
                 for media in content['media']:
                     self.assertEqual(media['url'], None)
+
+    @patch(
+        target='services.circle.CircleAPI._request',
+        return_value=WALLET_CREATION_RESPONSE_2,
+    )
+    def test_media_view(self, mock_post):  # noqa: ARG002
+        # Free Content
+        data = {
+            'caption': 'My First post',
+            'content_type': 'free',
+            'media': [
+                {
+                    'media_type': 'image',
+                    's3_key': 'images/8LnFdWY5KjemEPqXVfco4h7RZubFds9iM7DPpinWZCnG/test.png',
+                },
+                {
+                    'media_type': 'video',
+                    's3_key': 'videos/vYBRhWTQPJXByU3ED3SpUWSqR3RnJ7eT1vJ6Ckfbuqq/test.mov',
+                },
+            ],
+        }
+        self.client.post(
+            path='/contents/',
+            data=json.dumps(data),
+            headers=self.auth_header,
+            content_type='application/json',
+        )
+        # Paid Content
+        data['price'] = '1'
+        data['content_type'] = 'paid'
+        data['caption'] = 'My First Paid Content'
+        # Create User
+        keypair = Keypair()
+        Creator.objects.create(
+            moniker='bonfida2.sol',
+            image_url='https://google.com',
+            banner_url='https://google.com',
+            address=str(keypair.pubkey()),
+            subscription_type=SubscriptionType.FREE,
+            is_verified=True,
+        )
+        self.client.post(
+            path='/contents/',
+            data=json.dumps(data),
+            headers=self.auth_header,
+            content_type='application/json',
+        )
+        signature = keypair.sign_message(message=self.message)
+        auth_header = {
+            'Authorization': f'Signature {keypair.pubkey()}:{signature}',
+        }
+        discover_response = self.client.get(
+            path='/contents/media?discover=true',
+            headers=auth_header,
+            content_type='application/json',
+        )
+        creator_media_response = self.client.get(
+            path=f'/contents/media?creator={self.keypair.pubkey()}',
+            headers=auth_header,
+            content_type='application/json',
+        )
+        self.assertEqual(discover_response.status_code, 200)
+        self.assertEqual(creator_media_response.status_code, 200)
+        self.assertEqual(len(discover_response.json()['data']['results']), 2)
+        self.assertEqual(len(creator_media_response.json()['data']['results']), 4)

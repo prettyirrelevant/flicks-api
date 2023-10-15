@@ -9,13 +9,14 @@ from django.db import IntegrityError, transaction
 
 from rest_framework.views import APIView
 from rest_framework import status, serializers
-from rest_framework.generics import GenericAPIView, RetrieveAPIView, get_object_or_404
+from rest_framework.generics import ListAPIView, GenericAPIView, RetrieveAPIView, get_object_or_404
 
 from apps.transactions.models import Transaction
 from apps.contents.serializers import WithdrawalSerializer
 
 from services.circle import CircleAPI
 
+from utils.pagination import CustomCursorPagination
 from utils.constants import PERCENTAGE_CUT_FROM_WITHDRAWALS
 from utils.responses import error_response, success_response
 
@@ -152,3 +153,16 @@ class CreatorWithdrawalAPIView(GenericAPIView):
             )
 
         return success_response('Withdrawal is being processed.')
+
+
+class SuggestedCreatorAPIView(ListAPIView):
+    permission_classes = (IsAuthenticated,)
+    serializer_class = MinimalCreatorSerializer
+    pagination_class = CustomCursorPagination
+
+    def get_queryset(self):
+        return Creator.objects.all().exclude(address=self.request.user.address)
+
+    def get(self, request, *args, **kwargs):
+        response = self.list(request, args, kwargs)
+        return success_response(response.data)
