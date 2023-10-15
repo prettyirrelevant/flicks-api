@@ -427,17 +427,22 @@ class ContentsTest(TestCase):
         auth_header = {
             'Authorization': f'Signature {keypair.pubkey()}:{signature}',
         }
-        discover_response = self.client.get(
-            path='/contents/media?discover=true',
-            headers=auth_header,
-            content_type='application/json',
-        )
         creator_media_response = self.client.get(
-            path=f'/contents/media?creator={self.keypair.pubkey()}',
+            path=f'/contents/media/{self.keypair.pubkey()}',
             headers=auth_header,
             content_type='application/json',
         )
-        self.assertEqual(discover_response.status_code, 200)
         self.assertEqual(creator_media_response.status_code, 200)
-        self.assertEqual(len(discover_response.json()['data']['results']), 2)
         self.assertEqual(len(creator_media_response.json()['data']['results']), 4)
+
+    @patch(
+        target='services.circle.CircleAPI._request',
+        return_value=WALLET_CREATION_RESPONSE_2,
+    )
+    def test_discover_view(self, mock_post):  # noqa: ARG002
+        creator_media_response = self.client.get(
+            path='/contents/discover',
+            headers=self.auth_header,
+            content_type='application/json',
+        )
+        self.assertEqual(creator_media_response.status_code, 200)

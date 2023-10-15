@@ -337,14 +337,26 @@ class MediaView(ListAPIView):
     pagination_class = CustomCursorPagination
 
     def get_queryset(self):
-        discover = self.request.query_params.get('discover', False)
-        creator = self.request.query_params.get('creator', None)
-        qs = Media.objects.all()
-        if discover == 'true':
-            qs = qs.filter(content__content_type=ContentType.FREE)
-        if creator is not None:
-            qs = qs.filter(content__creator__address=creator)
+        creator = self.kwargs['address']
+        qs = Media.objects.filter(content__creator__address=creator)
         return qs.order_by('-created_at')
+
+    def get(self, request, *args, **kwargs):
+        response = self.list(request, args, kwargs)
+        return success_response(response.data)
+
+
+class DiscoverView(ListAPIView):
+    permission_classes = (IsAuthenticated,)
+    serializer_class = ContentSerializer
+    pagination_class = CustomCursorPagination
+
+    def get_queryset(self):
+        return (
+            Content.objects.filter(content_type=ContentType.FREE)
+            .exclude(creator__address=self.request.user.address)
+            .order_by('-created_at')
+        )
 
     def get(self, request, *args, **kwargs):
         response = self.list(request, args, kwargs)
