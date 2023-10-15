@@ -278,8 +278,9 @@ class CreateCommentAPIVIew(GenericAPIView):
     def post(self, request, *args, **kwargs):  # noqa: ARG002
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
+        serializer.save()
 
-        return success_response(data=serializer.data, status_code=status.HTTP_201_CREATED)
+        return success_response(data='Comment created successfully.', status_code=status.HTTP_201_CREATED)
 
     def get_serializer_context(self):
         context = super().get_serializer_context()
