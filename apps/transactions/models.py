@@ -1,9 +1,10 @@
 from decimal import Decimal
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 from django.db import models, transaction
 
 from utils.models import UUIDModel, TimestampedModel
+from utils.constants import PERCENTAGE_CUT_FROM_WITHDRAWALS
 
 from .choices import TransactionType, TransactionStatus
 
@@ -23,7 +24,6 @@ class Transaction(UUIDModel, TimestampedModel, models.Model):
     metadata = models.JSONField('metadata', default=dict)
     narration = models.TextField('narration', blank=True, default='')
     amount = models.DecimalField('amount', max_digits=20, decimal_places=6, blank=False)
-    reference = models.CharField('transaction reference', unique=True, max_length=200, blank=False)
     status = models.CharField('status', max_length=10, choices=TransactionStatus.choices, blank=False)
     tx_type = models.CharField('transaction type', max_length=30, choices=TransactionType.choices, blank=False)
 
@@ -38,14 +38,14 @@ class Transaction(UUIDModel, TimestampedModel, models.Model):
             account=creator,
             tx_type=TransactionType.CREDIT,
             status=TransactionStatus.SUCCESSFUL,
-            narration=f'{subscriber.moniker} just paid {amount} USD for subscription',
+            narration=f'@{subscriber.moniker} just paid {amount} USD for subscription',
         )
         subscriber_tx = cls(
             amount=amount,
             account=subscriber,
             tx_type=TransactionType.DEBIT,
             status=TransactionStatus.SUCCESSFUL,
-            narration=f'You just paid {amount} USD to subscribe to {creator.moniker}',
+            narration=f'You just paid {amount} USD to subscribe to @{creator.moniker}',
         )
 
         cls.objects.bulk_create([creator_tx, subscriber_tx])
@@ -58,14 +58,35 @@ class Transaction(UUIDModel, TimestampedModel, models.Model):
             account=creator,
             tx_type=TransactionType.CREDIT,
             status=TransactionStatus.SUCCESSFUL,
-            narration=f'{subscriber.moniker} just paid {amount} USD for your content',
+            narration=f'@{subscriber.moniker} just paid {amount} USD for your content',
         )
         subscriber_tx = cls(
             amount=amount,
             account=subscriber,
             tx_type=TransactionType.DEBIT,
             status=TransactionStatus.SUCCESSFUL,
-            narration=f'You just paid {amount} USD to view a content from {creator.moniker}',
+            narration=f'You just paid {amount} USD to view a content from @{creator.moniker}',
         )
 
         cls.objects.bulk_create([creator_tx, subscriber_tx])
+
+    @classmethod
+    @transaction.atomic()
+    def create_withdrawal(cls, creator: 'Creator', amount: Decimal, metadata: dict[str, Any]):
+        withdrawal_tx = cls(
+            amount=amount * PERCENTAGE_CUT_FROM_WITHDRAWALS,
+            account=creator,
+            metadata=metadata,
+            tx_type=TransactionType.DEBIT,
+            status=TransactionStatus.PENDING,
+            narration=f'You just withdrew {amount} USD from your wallet',
+        )
+        ten_percent_cut_tx = cls(
+            amount=amount * Decimal('0.1'),
+            account=creator,
+            metadata=metadata,
+            tx_type=TransactionType.DEBIT,
+            status=TransactionStatus.PENDING,
+            narration='Flicks 10% cut from withdrawal',
+        )
+        cls.objects.bulk_create([withdrawal_tx, ten_percent_cut_tx])

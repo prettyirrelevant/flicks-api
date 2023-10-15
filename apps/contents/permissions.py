@@ -27,6 +27,9 @@ class IsSubscribedToContent(BasePermission):
         if obj.content_type == ContentType.FREE:
             return True
 
+        if request.user == obj.creator:
+            return True
+
         return obj.purchases.filter(id=request.user.id).exists()
 
 

@@ -8,7 +8,7 @@ from rest_framework import serializers
 
 from apps.creators.serializers import MinimalCreatorSerializer
 
-from utils.constants import ZERO
+from utils.constants import ZERO, MINIMUM_ALLOWED_WITHDRAWAL_AMOUNT
 
 from .choices import MediaType, ContentType
 from .models import Media, Comment, Content, Livestream
@@ -161,3 +161,13 @@ class LiveStreamSerializer(serializers.ModelSerializer):
         model = Livestream
         fields = ('id', 'creator', 'title', 'description', 'start', 'duration')
         read_only_fields = ('id', 'creator')
+
+
+class WithdrawalSerializer(serializers.Serializer):
+    amount = serializers.DecimalField(max_digits=20, decimal_places=2, min_value=MINIMUM_ALLOWED_WITHDRAWAL_AMOUNT)
+
+    def validate_amount(self, value):
+        if self.context['request'].user.wallet.balance < value:
+            raise serializers.ValidationError('Creator balance is too low for this withdrawal')
+
+        return value

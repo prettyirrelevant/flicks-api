@@ -35,7 +35,7 @@ class CircleAPI(RequestMixin):
                     'address': destination_address,
                     'chain': chain,
                 },
-                'amount': {'amount': str(amount), 'currency': 'USD'},
+                'amount': {'amount': f'{amount:.2f}', 'currency': 'USD'},
             },
         )
 
@@ -58,7 +58,7 @@ class CircleAPI(RequestMixin):
                     'type': 'wallet',
                     'id': str(master_wallet_id),
                 },
-                'amount': {'amount': str(amount), 'currency': 'USD'},
+                'amount': {'amount': f'{amount:.2f}', 'currency': 'USD'},
             },
         )
 
