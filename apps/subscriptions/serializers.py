@@ -74,7 +74,7 @@ class BaseSubscriptionSerializer(serializers.ModelSerializer):
             creator.save(update_fields=['subscription_type'])
             current_subscription.save(update_fields=['status'])
 
-        instance, _ = subscription_model.objects.get_or_create(
+        instance, _ = subscription_model.objects.update_or_create(
             creator=creator,
             defaults=validated_data,
         )
