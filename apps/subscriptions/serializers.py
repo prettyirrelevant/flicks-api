@@ -38,12 +38,12 @@ class BaseSubscriptionSerializer(serializers.ModelSerializer):
     def get_subscription_type_from_model(
         model: Union[type[FreeSubscription], type[MonetarySubscription], type[NFTSubscription]],
     ):
-        if isinstance(model, FreeSubscription):
-            return SubscriptionType.FREE
-        if isinstance(model, MonetarySubscription):
-            return SubscriptionType.MONETARY
-        if isinstance(model, NFTSubscription):
+        if model.__name__ == 'NFTSubscription':
             return SubscriptionType.NFT
+        if model.__name__ == 'FreeSubscription':
+            return SubscriptionType.FREE
+        if model.__name__ == 'MonetarySubscription':
+            return SubscriptionType.MONETARY
 
         raise AssertionError(f'Unsupported subscription model {model.__name__}.')
 
