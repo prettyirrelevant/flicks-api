@@ -90,10 +90,14 @@ def handle_wallet_deposits_webhook(message, webhook):
 @transaction.atomic()
 def handle_transfer_to_master_wallet_webhook(message, webhook):
     if message['status'] not in {'complete', 'failed'}:
+        webhook.status = WebhookStatus.COMPLETED
+        webhook.save()
         return
 
     txn = Transaction.objects.get(metadata__id=message['id'])
     if txn.status in {TransactionStatus.SUCCESSFUL, TransactionStatus.FAILED}:
+        webhook.status = WebhookStatus.COMPLETED
+        webhook.save()
         return
 
     txn.metadata = message
@@ -121,10 +125,14 @@ def handle_subscription_confirmation_webhook(webhook):
 @transaction.atomic()
 def handle_withdrawal_webhook(message, webhook):
     if message['status'] not in {'complete', 'failed'}:
+        webhook.status = WebhookStatus.COMPLETED
+        webhook.save()
         return
 
     transactions = Transaction.objects.filter(metadata__id=message['id'])
     if transactions.first().status in {TransactionStatus.SUCCESSFUL, TransactionStatus.FAILED}:
+        webhook.status = WebhookStatus.COMPLETED
+        webhook.save()
         return
 
     transactions.update(
