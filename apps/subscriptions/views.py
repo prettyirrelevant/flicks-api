@@ -37,7 +37,7 @@ class SubscriptionsAPIView(GenericAPIView, CreateModelMixin):
         if getattr(self, 'swagger_fake_view', False):
             return super().get_serializer_class()
 
-        subscription_type = self.request.data.get('type')
+        subscription_type = self.request.data.pop('type')
         if subscription_type is None:
             raise ParseError('`type` is missing from request payload')
 
@@ -49,9 +49,6 @@ class SubscriptionsAPIView(GenericAPIView, CreateModelMixin):
 
         if subscription_type == SubscriptionType.NFT:
             return NFTSubscriptionSerializer
-
-        # remove the `type`
-        self.request.data.pop('type')
 
         raise ParseError(f'{subscription_type} is not a supported subscription type')
 
