@@ -50,6 +50,9 @@ class SubscriptionsAPIView(GenericAPIView, CreateModelMixin):
         if subscription_type == SubscriptionType.NFT:
             return NFTSubscriptionSerializer
 
+        # remove the `type`
+        self.request.data.pop('type')
+
         raise ParseError(f'{subscription_type} is not a supported subscription type')
 
     def put(self, request, *args, **kwargs):
@@ -58,7 +61,6 @@ class SubscriptionsAPIView(GenericAPIView, CreateModelMixin):
         When **type=monetary**, **status** and **amount** are needed.
         When **type=nft**, **status**, **collection_name**, **collection_address**, **collection_image_url** and **collection_description** are needed.
         """  # noqa: E501
-        request.data.pop('type')
 
         response = self.create(request, *args, *kwargs)
         return success_response(data=response.data, status_code=response.status_code)
