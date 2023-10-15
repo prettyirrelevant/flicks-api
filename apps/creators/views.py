@@ -146,9 +146,9 @@ class CreatorWithdrawalAPIView(GenericAPIView):
                 raise BadGatewayError('Unable to process your withdrawal at this time. Please try again later.')
 
             Transaction.create_withdrawal(
-                amount=amount,
                 creator=self.request.user,
                 metadata=withdrawal_response['data'],
+                amount=amount,
             )
 
         return success_response('Withdrawal is being processed.')

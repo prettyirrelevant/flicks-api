@@ -53,34 +53,34 @@ def handle_pending_webhooks():
                 message['transfer']['source']['type'] == 'wallet'
                 and message['transfer']['destination']['type'] == 'blockchain'
             ):
-                ...
+                try:
+                    handle_withdrawal_webhook(message['transfer'], webhook)
+                except Exception:
+                    logger.exception('Encountered an error while resolving a withdrawal to a creator address')
+                    continue
 
 
 @transaction.atomic()
 def handle_wallet_deposits_webhook(message, webhook):
     amount = Decimal(message['amount']['amount'])
     network = Blockchain(message['source']['chain']).name.title()
-    if amount < MINIMUM_ALLOWED_DEPOSIT_AMOUNT:
+    if (
+        amount < MINIMUM_ALLOWED_DEPOSIT_AMOUNT
+        or message['amount']['currency'] != 'USD'
+        or message['status'] != 'complete'
+    ):
         webhook.status = WebhookStatus.COMPLETED
         webhook.save()
-
-    if message['amount']['currency'] != 'USD':
-        webhook.status = WebhookStatus.COMPLETED
-        webhook.save()
-
-    if message['status'] != 'complete':
-        webhook.status = WebhookStatus.COMPLETED
-        webhook.save()
+        return
 
     wallet = Wallet.objects.get(provider_id=message['destination']['id'])
     Transaction.objects.create(
         amount=amount,
         metadata=message,
         account=wallet.creator,
-        reference=message['id'],
         tx_type=TransactionType.CREDIT,
         status=TransactionStatus.SUCCESSFUL,
-        narration=f'{amount} USDC top up via {network} network',
+        narration=f'{amount} USDC top up via {network}',
     )
     wallet.top_up(amount)
     webhook.status = WebhookStatus.COMPLETED
@@ -89,12 +89,10 @@ def handle_wallet_deposits_webhook(message, webhook):
 
 @transaction.atomic()
 def handle_transfer_to_master_wallet_webhook(message, webhook):
-    Decimal(message['amount']['amount'])
-    if message['status'] == 'pending':
-        webhook.status = WebhookStatus.COMPLETED
-        webhook.save()
+    if message['status'] not in {'complete', 'failed'}:
+        return
 
-    txn = Transaction.objects.get(reference=message['id'])
+    txn = Transaction.objects.get(metadata__id=message['id'])
     if txn.status in {TransactionStatus.SUCCESSFUL, TransactionStatus.FAILED}:
         return
 
@@ -118,3 +116,20 @@ def handle_subscription_confirmation_webhook(webhook):
     else:
         webhook.status = WebhookStatus.COMPLETED
         webhook.save()
+
+
+@transaction.atomic()
+def handle_withdrawal_webhook(message, webhook):
+    if message['status'] not in {'complete', 'failed'}:
+        return
+
+    transactions = Transaction.objects.filter(metadata__id=message['id'])
+    if transactions.first().status in {TransactionStatus.SUCCESSFUL, TransactionStatus.FAILED}:
+        return
+
+    transactions.update(
+        metadata=message,
+        status=TransactionStatus.SUCCESSFUL if message['status'] == 'complete' else TransactionStatus.FAILED,
+    )
+    webhook.status = WebhookStatus.COMPLETED
+    webhook.save()
