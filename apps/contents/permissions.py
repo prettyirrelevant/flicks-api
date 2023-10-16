@@ -16,7 +16,6 @@ class IsSubscribedToCreator(BasePermission):
         subscription_detail_qs = SubscriptionDetail.objects.filter(
             creator=obj.creator,
             subscriber=request.user,
-            expires_at__lte=timezone.now(),
             status=SubscriptionDetailStatus.ACTIVE,
         )
         return subscription_detail_qs.exists()
