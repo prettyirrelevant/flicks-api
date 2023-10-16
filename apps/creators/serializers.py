@@ -9,6 +9,7 @@ from apps.subscriptions.choices import SubscriptionType, SubscriptionDetailStatu
 
 from services.sharingan import SharinganService
 
+from apps.subscriptions.models import SubscriptionDetail
 from .models import Wallet, Creator, WalletDepositAddress
 
 
@@ -28,12 +29,24 @@ class WalletSerializer(serializers.ModelSerializer):
 
 class CreatorSerializer(serializers.ModelSerializer):
     wallet = WalletSerializer()
+    is_subscribed = serializers.SerializerMethodField()
     contents_count = serializers.SerializerMethodField()
     subscribers_count = serializers.SerializerMethodField()
     subscription_info = serializers.SerializerMethodField()
 
     def get_contents_count(self, obj):  # noqa: PLR6301
         return obj.contents.count()
+
+    def get_is_subscribed(self, obj):
+        if not self.context['request'].user:
+            return False
+
+        status = SubscriptionDetail.objects.filter(
+            creator=obj,
+            status=SubscriptionDetailStatus.ACTIVE,
+            subscriber=self.context['request'].user,
+        )
+        return status.exists()
 
     def get_subscribers_count(self, obj):  # noqa: PLR6301
         return obj.subscribers.filter(status=SubscriptionDetailStatus.ACTIVE, expires_at__gte=timezone.now()).count()
@@ -68,6 +81,7 @@ class CreatorSerializer(serializers.ModelSerializer):
             'is_verified',
             'social_links',
             'is_suspended',
+            'is_subscribed',
             'contents_count',
             'subscription_info',
             'subscribers_count',
