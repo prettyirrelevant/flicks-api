@@ -134,7 +134,7 @@ class CreatorWithdrawalAPIView(GenericAPIView):
             self.request.user.wallet.withdraw(amount)
             circle_api = CircleAPI(
                 api_key=settings.CIRCLE_API_KEY,
-                base_url=settings.CIRCLE_BASE_URL,
+                base_url=settings.CIRCLE_API_BASE_URL,
             )
 
             withdrawal_response = circle_api.make_withdrawal(
