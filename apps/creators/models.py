@@ -73,6 +73,8 @@ class Wallet(UUIDModel, TimestampedModel, models.Model):
         self.balance = models.F('balance') + amount
         self.save()
 
+        self.refresh_from_db()
+
     @transaction.atomic()
     def withdraw(self, amount: Decimal):
         if self.creator.is_suspended:
@@ -83,6 +85,8 @@ class Wallet(UUIDModel, TimestampedModel, models.Model):
 
         self.balance = models.F('balance') - amount
         self.save()
+
+        self.refresh_from_db()
 
     @transaction.atomic()
     def transfer(self, amount: Decimal, recipient: 'Wallet'):
@@ -97,6 +101,9 @@ class Wallet(UUIDModel, TimestampedModel, models.Model):
 
         self.save()
         recipient.save()
+
+        self.refresh_from_db()
+        recipient.refresh_from_db()
 
 
 class WalletDepositAddress(UUIDModel, TimestampedModel, models.Model):

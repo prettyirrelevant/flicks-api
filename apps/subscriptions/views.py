@@ -3,6 +3,7 @@ from datetime import timedelta
 from solders.pubkey import Pubkey
 
 from django.conf import settings
+from django.db import transaction
 from django.utils import timezone
 
 from rest_framework import serializers
@@ -105,16 +106,17 @@ class SubscribeToCreatorAPIView(APIView):
         creator = self.validate_creator_address()
         subscriber = request.user
 
-        if creator.subscription_type == SubscriptionType.FREE:
-            self.handle_free_subscription(creator, subscriber)
-        elif creator.subscription_type == SubscriptionType.NFT:
-            self.handle_nft_subscription(creator, subscriber)
-        elif creator.subscription_type == SubscriptionType.MONETARY:
-            self.handle_monetary_subscription(creator, subscriber)
-        else:
-            raise serializers.ValidationError('Invalid subscription type')
+        with transaction.atomic():
+            if creator.subscription_type == SubscriptionType.FREE:
+                self.handle_free_subscription(creator, subscriber)
+            elif creator.subscription_type == SubscriptionType.NFT:
+                self.handle_nft_subscription(creator, subscriber)
+            elif creator.subscription_type == SubscriptionType.MONETARY:
+                self.handle_monetary_subscription(creator, subscriber)
+            else:
+                raise serializers.ValidationError('Invalid subscription type')
 
-        return success_response(data='Subscription created successfully')
+            return success_response(data='Subscription created successfully')
 
     @staticmethod
     def handle_free_subscription(creator: 'Creator', subscriber: 'Creator'):
