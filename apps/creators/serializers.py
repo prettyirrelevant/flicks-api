@@ -5,11 +5,11 @@ from django.utils import timezone
 
 from rest_framework import serializers
 
+from apps.subscriptions.models import SubscriptionDetail
 from apps.subscriptions.choices import SubscriptionType, SubscriptionDetailStatus
 
 from services.sharingan import SharinganService
 
-from apps.subscriptions.models import SubscriptionDetail
 from .models import Wallet, Creator, WalletDepositAddress
 
 
