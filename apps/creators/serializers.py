@@ -2,6 +2,7 @@ from solders.pubkey import Pubkey
 
 from django.conf import settings
 from django.utils import timezone
+from django.contrib.auth.models import AnonymousUser
 
 from rest_framework import serializers
 
@@ -38,7 +39,7 @@ class CreatorSerializer(serializers.ModelSerializer):
         return obj.contents.count()
 
     def get_is_subscribed(self, obj):
-        if not self.context['request'].user:
+        if isinstance(self.context['request'].user, AnonymousUser):
             return False
 
         status = SubscriptionDetail.objects.filter(

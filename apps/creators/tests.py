@@ -106,6 +106,7 @@ class AccountTest(TestCase):
                 'is_verified': True,
                 'contents_count': 0,
                 'is_suspended': False,
+                'is_subscribed': False,
                 'subscribers_count': 0,
                 'subscription_info': {},
                 'suspension_reason': '',

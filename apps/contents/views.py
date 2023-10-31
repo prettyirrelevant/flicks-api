@@ -325,10 +325,11 @@ class TimelineView(ListAPIView):
     pagination_class = CustomCursorPagination
 
     def get_queryset(self):
-        subscribed_creators = self.request.user.subscriptions.filter(status=SubscriptionDetailStatus.ACTIVE).values(
-            'creator',
-        )
-        return Content.objects.filter(creator__in=subscribed_creators).order_by('-created_at')
+        return Content.objects.filter(
+            creator__in=self.request.user.subscriptions.filter(status=SubscriptionDetailStatus.ACTIVE).values(
+                'creator',
+            ),
+        ).order_by('-created_at')
 
 
 class MediaView(ListAPIView):

@@ -1,5 +1,3 @@
-from django.utils import timezone
-
 from rest_framework.permissions import BasePermission
 
 from apps.subscriptions.models import SubscriptionDetail

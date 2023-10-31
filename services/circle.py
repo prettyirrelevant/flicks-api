@@ -12,7 +12,7 @@ class CircleAPI(RequestMixin):
 
     def ping(self) -> bool:
         response = self._request('GET', 'ping')
-        return response.get('message') == 'pong'
+        return False if response is None else response.get('message') == 'pong'
 
     def make_withdrawal(
         self,
