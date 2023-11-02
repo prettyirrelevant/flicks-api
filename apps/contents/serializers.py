@@ -140,6 +140,7 @@ class ContentSerializer(serializers.ModelSerializer):
 
 
 class LiveStreamSerializer(serializers.ModelSerializer):
+    creator = MinimalCreatorSerializer()
     start = serializers.DateTimeField(required=False, allow_null=True)
 
     def validate(self, attrs):
