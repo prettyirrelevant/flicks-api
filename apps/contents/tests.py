@@ -31,7 +31,10 @@ class ContentsTest(TestCase):
         logging.disable(logging.CRITICAL)
 
     @staticmethod
-    @patch(target='services.circle.CircleAPI._request', return_value=WALLET_CREATION_RESPONSE)
+    @patch(
+        target='services.circle.CircleAPI._request',
+        return_value=WALLET_CREATION_RESPONSE,
+    )
     def create_creator(moniker: str, mock_post):  # noqa: ARG004
         keypair = Keypair()
         creator = Creator.objects.create(
@@ -50,7 +53,10 @@ class ContentsTest(TestCase):
         self.assertContains(response, 'Authentication credentials were not provided.', status_code=401)
         self.assertContains(response, 'NotAuthenticated', status_code=401)
 
-    @patch(target='services.circle.CircleAPI._request', return_value=WALLET_CREATION_RESPONSE)
+    @patch(
+        target='services.circle.CircleAPI._request',
+        return_value=WALLET_CREATION_RESPONSE,
+    )
     def test_generate_presigned_url_unsupported_file(self, mock_post):
         response = self.client.post(
             path='/contents/get-upload-urls',
@@ -60,7 +66,10 @@ class ContentsTest(TestCase):
         self.assertEqual(response.json()['message'], 'ValidationError')
         self.assertEqual(response.status_code, 400)
 
-    @patch(target='services.circle.CircleAPI._request', return_value=WALLET_CREATION_RESPONSE)
+    @patch(
+        target='services.circle.CircleAPI._request',
+        return_value=WALLET_CREATION_RESPONSE,
+    )
     def test_generate_presigned_url_max_uploads_exceeded(self, mock_post):
         response = self.client.post(
             path='/contents/get-upload-urls',
@@ -80,10 +89,16 @@ class ContentsTest(TestCase):
             content_type='application/json',
         )
         self.assertEqual(response.json()['message'], 'ValidationError')
-        self.assertEqual(response.json()['errors'], {'files': ['Max file upload per request exceeded']})
+        self.assertEqual(
+            response.json()['errors'],
+            {'files': ['Max file upload per request exceeded']},
+        )
         self.assertEqual(response.status_code, 400)
 
-    @patch(target='services.circle.CircleAPI._request', return_value=WALLET_CREATION_RESPONSE)
+    @patch(
+        target='services.circle.CircleAPI._request',
+        return_value=WALLET_CREATION_RESPONSE,
+    )
     def test_generate_presigned_url_success(self, mock_post):
         data = {
             'files': [
@@ -100,7 +115,10 @@ class ContentsTest(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertEqual(len(response.json()['data'].keys()), len(data['files']))
 
-    @patch(target='services.circle.CircleAPI._request', return_value=WALLET_CREATION_RESPONSE)
+    @patch(
+        target='services.circle.CircleAPI._request',
+        return_value=WALLET_CREATION_RESPONSE,
+    )
     def test_content_view(self, mock_post):
         # Create Content No Auth
         response = self.client.post(path='/contents/')
@@ -111,8 +129,14 @@ class ContentsTest(TestCase):
             'caption': 'My First post',
             'content_type': 'free',
             'media': [
-                {'media_type': 'image', 's3_key': 'images/8LnFdWY5KjemEPqXVfco4h7RZubFds9iM7DPpinWZCnG/test.png'},
-                {'media_type': 'video', 's3_key': 'videos/vYBRhWTQPJXByU3ED3SpUWSqR3RnJ7eT1vJ6Ckfbuqq/test.mov'},
+                {
+                    'media_type': 'image',
+                    's3_key': 'images/8LnFdWY5KjemEPqXVfco4h7RZubFds9iM7DPpinWZCnG/test.png',
+                },
+                {
+                    'media_type': 'video',
+                    's3_key': 'videos/vYBRhWTQPJXByU3ED3SpUWSqR3RnJ7eT1vJ6Ckfbuqq/test.mov',
+                },
             ],
         }
         response = self.client.post(
@@ -181,7 +205,10 @@ class ContentsTest(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertEqual(len(response.json()['data']['results']), 2)
 
-    @patch(target='services.circle.CircleAPI._request', return_value=WALLET_CREATION_RESPONSE)
+    @patch(
+        target='services.circle.CircleAPI._request',
+        return_value=WALLET_CREATION_RESPONSE,
+    )
     def test_livestream_view(self, mock_post):
         # Create Livestream With Future Start
         data = {
@@ -208,7 +235,7 @@ class ContentsTest(TestCase):
             'title': 'My Instant Livestream',
             'start': None,
             'description': 'I just opened a Flicks Account. Join me for my first Instant Livestream.',
-            'duration': datetime.timedelta(minutes=10).seconds,
+            'duration': datetime.timedelta(minutes=15).seconds,
         }
         response = self.client.post(
             headers=self.auth_header,
@@ -249,7 +276,7 @@ class ContentsTest(TestCase):
         )
         livestream.refresh_from_db()
         self.assertEqual(response.status_code, 200)
-        self.assertEqual(response.json()['data']['message'], 'livestream updated successfully')
+        self.assertEqual(response.json()['data']['id'], str(livestream.id))
         self.assertEqual(livestream.title, data['title'])
         self.assertEqual(livestream.description, data['description'])
         self.assertEqual(livestream.start.strftime('%Y-%m-%d %H:%M:%S'), data['start'])
@@ -267,15 +294,24 @@ class ContentsTest(TestCase):
         self.assertEqual(response.json()['data']['channel_name'], str(livestream.id))
         self.assertIn('token', response.json()['data'])
 
-    @patch(target='services.circle.CircleAPI._request', return_value=WALLET_CREATION_RESPONSE_2)
+    @patch(
+        target='services.circle.CircleAPI._request',
+        return_value=WALLET_CREATION_RESPONSE_2,
+    )
     def test_user_timeline_view(self, mock_post):
         # Free Content
         data = {
             'caption': 'My First post',
             'content_type': 'free',
             'media': [
-                {'media_type': 'image', 's3_key': 'images/8LnFdWY5KjemEPqXVfco4h7RZubFds9iM7DPpinWZCnG/test.png'},
-                {'media_type': 'video', 's3_key': 'videos/vYBRhWTQPJXByU3ED3SpUWSqR3RnJ7eT1vJ6Ckfbuqq/test.mov'},
+                {
+                    'media_type': 'image',
+                    's3_key': 'images/8LnFdWY5KjemEPqXVfco4h7RZubFds9iM7DPpinWZCnG/test.png',
+                },
+                {
+                    'media_type': 'video',
+                    's3_key': 'videos/vYBRhWTQPJXByU3ED3SpUWSqR3RnJ7eT1vJ6Ckfbuqq/test.mov',
+                },
             ],
         }
         self.client.post(
@@ -315,22 +351,35 @@ class ContentsTest(TestCase):
         )
         signature = keypair.sign_message(message=self.message)
         auth_header = {'Authorization': f'Signature {keypair.pubkey()}:{signature}'}
-        response = self.client.get(path='/contents/timeline', headers=auth_header, content_type='application/json')
+        response = self.client.get(
+            path='/contents/timeline',
+            headers=auth_header,
+            content_type='application/json',
+        )
         contents = response.json()['results']
         for content in contents:
             if content['content_type'] == 'paid' and content['is_purchased'] is False:
                 for media in content['media']:
                     self.assertEqual(media['url'], None)
 
-    @patch(target='services.circle.CircleAPI._request', return_value=WALLET_CREATION_RESPONSE_2)
+    @patch(
+        target='services.circle.CircleAPI._request',
+        return_value=WALLET_CREATION_RESPONSE_2,
+    )
     def test_media_view(self, mock_post):
         # Free Content
         data = {
             'caption': 'My First post',
             'content_type': 'free',
             'media': [
-                {'media_type': 'image', 's3_key': 'images/8LnFdWY5KjemEPqXVfco4h7RZubFds9iM7DPpinWZCnG/test.png'},
-                {'media_type': 'video', 's3_key': 'videos/vYBRhWTQPJXByU3ED3SpUWSqR3RnJ7eT1vJ6Ckfbuqq/test.mov'},
+                {
+                    'media_type': 'image',
+                    's3_key': 'images/8LnFdWY5KjemEPqXVfco4h7RZubFds9iM7DPpinWZCnG/test.png',
+                },
+                {
+                    'media_type': 'video',
+                    's3_key': 'videos/vYBRhWTQPJXByU3ED3SpUWSqR3RnJ7eT1vJ6Ckfbuqq/test.mov',
+                },
             ],
         }
         self.client.post(
@@ -369,7 +418,10 @@ class ContentsTest(TestCase):
         self.assertEqual(creator_media_response.status_code, 200)
         self.assertEqual(len(creator_media_response.json()['data']['results']), 4)
 
-    @patch(target='services.circle.CircleAPI._request', return_value=WALLET_CREATION_RESPONSE_2)
+    @patch(
+        target='services.circle.CircleAPI._request',
+        return_value=WALLET_CREATION_RESPONSE_2,
+    )
     def test_discover_view(self, mock_post):
         creator_media_response = self.client.get(
             path='/contents/discover',

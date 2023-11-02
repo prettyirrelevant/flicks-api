@@ -113,7 +113,11 @@ class MonikerAvailabilityAPIView(APIView):
 
         qs = Creator.objects.filter(moniker=q.lower())
         if qs.exists():
-            return error_response(message='Moniker is already taken.', errors=[], status_code=status.HTTP_409_CONFLICT)
+            return error_response(
+                message='Moniker is already taken.',
+                errors=[],
+                status_code=status.HTTP_409_CONFLICT,
+            )
 
         return success_response(data='Moniker is available to use.')
 

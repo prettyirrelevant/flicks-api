@@ -448,6 +448,7 @@ disable=raw-checker-failed,
         too-many-return-statements,
         too-few-public-methods,
         abstract-method,
+        multiple-statements
 
 # Enable the message, report, category or checker with the given id(s). You can
 # either give multiple identifier separated by comma (,) or put this option

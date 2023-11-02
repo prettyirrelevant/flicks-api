@@ -114,7 +114,11 @@ def handle_subscription_confirmation_webhook(webhook):
         response = requests.get(url=url, timeout=10)
         response.raise_for_status()
     except requests.RequestException as e:
-        logger.exception('Circle notification confirmation error @ url %s with response %s', url, e.response.json())
+        logger.exception(
+            'Circle notification confirmation error @ url %s with response %s',
+            url,
+            e.response.json(),
+        )
     except Exception:
         logger.exception('Circle notification confirmation error @ url %s', url)
     else:
@@ -130,7 +134,10 @@ def handle_withdrawal_webhook(message, webhook):
         return
 
     transactions = Transaction.objects.filter(metadata__id=message['id'])
-    if transactions.first().status in {TransactionStatus.SUCCESSFUL, TransactionStatus.FAILED}:
+    if transactions.first().status in {
+        TransactionStatus.SUCCESSFUL,
+        TransactionStatus.FAILED,
+    }:
         webhook.status = WebhookStatus.COMPLETED
         webhook.save()
         return

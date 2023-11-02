@@ -57,7 +57,11 @@ class Media(UUIDModel, TimestampedModel, models.Model):
 
     @property
     def url(self):
-        s3_service = S3Service(settings.AWS_ACCESS_KEY_ID, settings.AWS_SECRET_ACCESS_KEY, settings.BUCKET_NAME)
+        s3_service = S3Service(
+            settings.AWS_ACCESS_KEY_ID,
+            settings.AWS_SECRET_ACCESS_KEY,
+            settings.BUCKET_NAME,
+        )
         return s3_service.get_pre_signed_fetch_url(self.s3_key, settings.PRESIGNED_URL_EXPIRATION)
 
 
@@ -75,8 +79,8 @@ class Livestream(UUIDModel, TimestampedModel, models.Model):
     duration = models.DurationField(
         verbose_name='livestream duration',
         validators=[
-            MinValueValidator(datetime.timedelta(minutes=10)),
-            MaxValueValidator(datetime.timedelta(minutes=30)),
+            MinValueValidator(datetime.timedelta(minutes=15)),
+            MaxValueValidator(datetime.timedelta(minutes=120)),
         ],
     )
 

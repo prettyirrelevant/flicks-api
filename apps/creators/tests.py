@@ -55,7 +55,10 @@ WALLET_CREATION_RESPONSE_2 = json.loads(
 class AccountTest(TestCase):
     def setUp(self):
         self.client = APIClient()
-        (self.keypair, self.creator) = self.create_creator()  # pylint: disable=no-value-for-parameter
+        (
+            self.keypair,
+            self.creator,
+        ) = self.create_creator()  # pylint: disable=no-value-for-parameter
 
         logging.disable(logging.CRITICAL)
 
@@ -63,7 +66,10 @@ class AccountTest(TestCase):
         logging.disable(logging.NOTSET)
 
     @staticmethod
-    @patch(target='services.circle.CircleAPI._request', return_value=WALLET_CREATION_RESPONSE)
+    @patch(
+        target='services.circle.CircleAPI._request',
+        return_value=WALLET_CREATION_RESPONSE,
+    )
     def create_creator(mock_post):  # noqa: ARG004
         keypair = Keypair()
         creator = Creator.objects.create(
@@ -81,7 +87,10 @@ class AccountTest(TestCase):
         response = self.client.get(f'/creators/{self.keypair.pubkey()}')
         self.assertEqual(response.status_code, 200)
 
-    @patch(target='services.circle.CircleAPI._request', return_value=WALLET_CREATION_RESPONSE)
+    @patch(
+        target='services.circle.CircleAPI._request',
+        return_value=WALLET_CREATION_RESPONSE,
+    )
     def test_get_profile_with_valid_credentials(self, mock_post):
         signature = self.keypair.sign_message(b'Message: Welcome to Flicks!\nURI: https://flicks.vercel.app')
         response = self.client.get(
@@ -119,7 +128,11 @@ class AccountTest(TestCase):
             path='/creators/me',
             headers={'Authorization': f'Signature {self.keypair.pubkey()}:{signature}'},
         )
-        self.assertContains(response, 'Signature provided is not valid for the address.', status_code=401)
+        self.assertContains(
+            response,
+            'Signature provided is not valid for the address.',
+            status_code=401,
+        )
         self.assertContains(response, 'AuthenticationFailed', status_code=401)
 
     def test_get_profile_with_invalid_credentials_signature(self):
@@ -140,7 +153,10 @@ class AccountTest(TestCase):
         self.assertContains(response, 'String is the wrong size', status_code=401)
         self.assertContains(response, 'AuthenticationFailed', status_code=401)
 
-    @patch(target='services.circle.CircleAPI._request', return_value=WALLET_CREATION_RESPONSE)
+    @patch(
+        target='services.circle.CircleAPI._request',
+        return_value=WALLET_CREATION_RESPONSE,
+    )
     def test_get_suggested_creators(self, mock_post):
         signature = self.keypair.sign_message(b'Message: Welcome to Flicks!\nURI: https://flicks.vercel.app')
         response = self.client.get(

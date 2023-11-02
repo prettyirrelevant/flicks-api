@@ -49,7 +49,13 @@ def move_funds_to_master_wallet():
         if wallet_info_response is None:
             continue
 
-        usd_balance = next(filter(lambda x: x['currency'] == 'USD', wallet_info_response['data']['balances']), None)
+        usd_balance = next(
+            filter(
+                lambda x: x['currency'] == 'USD',
+                wallet_info_response['data']['balances'],
+            ),
+            None,
+        )
         if usd_balance is None:
             continue
 

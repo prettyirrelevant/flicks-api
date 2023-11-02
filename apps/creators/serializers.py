@@ -94,7 +94,14 @@ class CreatorSerializer(serializers.ModelSerializer):
 class MinimalCreatorSerializer(serializers.ModelSerializer):
     class Meta:
         model = Creator
-        fields = ('id', 'address', 'moniker', 'image_url', 'is_verified', 'subscription_type')
+        fields = (
+            'id',
+            'address',
+            'moniker',
+            'image_url',
+            'is_verified',
+            'subscription_type',
+        )
 
 
 class CreatorCreationSerializer(serializers.Serializer):

@@ -39,7 +39,7 @@ def pack_string(string):
 
 def unpack_string(buffer):
     data_length, buffer = unpack_uint16(buffer)
-    return (struct.unpack(f'<{data_length}s', buffer[:data_length])[0], buffer[data_length:])
+    return struct.unpack(f'<{data_length}s', buffer[:data_length])[0], buffer[data_length:]
 
 
 def pack_map_uint32(map_val):

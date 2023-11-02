@@ -67,7 +67,11 @@ class CreateContentSerializer(serializers.Serializer):
             media = validated_data.pop('media')
             content = Content.objects.create(**validated_data, creator=creator)
             for entry in media:
-                Media.objects.create(content=content, s3_key=entry['s3_key'], media_type=entry['media_type'])
+                Media.objects.create(
+                    content=content,
+                    s3_key=entry['s3_key'],
+                    media_type=entry['media_type'],
+                )
             return content
 
     def validate(self, attrs):
@@ -140,7 +144,7 @@ class ContentSerializer(serializers.ModelSerializer):
 
 
 class LiveStreamSerializer(serializers.ModelSerializer):
-    creator = MinimalCreatorSerializer()
+    creator = MinimalCreatorSerializer(read_only=True)
     start = serializers.DateTimeField(required=False, allow_null=True)
 
     def validate(self, attrs):

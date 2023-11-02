@@ -50,7 +50,13 @@ THIRD_PARTY_APPS = [
     'huey.contrib.djhuey',
 ]
 
-LOCAL_APPS: list[str] = ['apps.creators', 'apps.webhooks', 'apps.transactions', 'apps.contents', 'apps.subscriptions']
+LOCAL_APPS: list[str] = [
+    'apps.creators',
+    'apps.webhooks',
+    'apps.transactions',
+    'apps.contents',
+    'apps.subscriptions',
+]
 
 INSTALLED_APPS = DJANGO_APPS + THIRD_PARTY_APPS + LOCAL_APPS
 
@@ -205,7 +211,11 @@ EXTRA_CHECKS = {
         'field-verbose-name',
         'field-file-upload-to',
         'drf-model-serializer-extra-kwargs',
-        {'id': 'drf-model-serializer-meta-attribute', 'attrs': ['fields'], 'level': 'CRITICAL'},
+        {
+            'id': 'drf-model-serializer-meta-attribute',
+            'attrs': ['fields'],
+            'level': 'CRITICAL',
+        },
     ],
 }
 
@@ -262,10 +272,24 @@ if not DEBUG:
         'formatters': {
             'verbose': {'format': '[%(asctime)s] %(levelname)s:%(name)s:%(process)d:%(threadName)s: %(message)s'},
         },
-        'handlers': {'console': {'level': 'DEBUG', 'class': 'logging.StreamHandler', 'formatter': 'verbose'}},
+        'handlers': {
+            'console': {
+                'level': 'DEBUG',
+                'class': 'logging.StreamHandler',
+                'formatter': 'verbose',
+            }
+        },
         'root': {'level': 'INFO', 'handlers': ['console']},
         'loggers': {
-            'django.request': {'handlers': ['console'], 'level': 'ERROR', 'propagate': False},
-            'django.security.DisallowedHost': {'level': 'ERROR', 'handlers': ['console'], 'propagate': False},
+            'django.request': {
+                'handlers': ['console'],
+                'level': 'ERROR',
+                'propagate': False,
+            },
+            'django.security.DisallowedHost': {
+                'level': 'ERROR',
+                'handlers': ['console'],
+                'propagate': False,
+            },
         },
     }

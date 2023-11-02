@@ -23,7 +23,10 @@ class TransactionsTest(TestCase):
         logging.disable(logging.CRITICAL)
 
     @staticmethod
-    @patch(target='services.circle.CircleAPI._request', return_value=WALLET_CREATION_RESPONSE)
+    @patch(
+        target='services.circle.CircleAPI._request',
+        return_value=WALLET_CREATION_RESPONSE,
+    )
     def create_creator(moniker: str, mock_post):  # noqa: ARG004
         keypair = Keypair()
         creator = Creator.objects.create(
@@ -37,7 +40,10 @@ class TransactionsTest(TestCase):
 
         return keypair, creator
 
-    @patch(target='services.circle.CircleAPI._request', return_value=WALLET_CREATION_RESPONSE)
+    @patch(
+        target='services.circle.CircleAPI._request',
+        return_value=WALLET_CREATION_RESPONSE,
+    )
     def test_transactions_view(self, mock_post):
         response = self.client.get(path='/transactions/', headers=self.auth_header)
         self.assertEqual(response.status_code, 200)

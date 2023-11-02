@@ -233,7 +233,13 @@ class JoinLivestreamView(APIView):
             privilege_expire=token_expiration,
             app_certificate=settings.AGORA_APP_CERTIFICATE,
         )
-        return success_response({'token': token, 'channel_name': str(stream.id), 'user_account': request.user.address})
+        return success_response(
+            {
+                'token': token,
+                'channel_name': str(stream.id),
+                'user_account': request.user.address,
+            }
+        )
 
 
 class LikesAPIView(APIView):

@@ -41,7 +41,10 @@ def custom_exception_handler(exception, context) -> Response | None:
 
 
 def handler_400(request, exception, *args, **kwargs):
-    return JsonResponse(data={'message': 'Bad request', 'errors': None}, status=status.HTTP_400_BAD_REQUEST)
+    return JsonResponse(
+        data={'message': 'Bad request', 'errors': None},
+        status=status.HTTP_400_BAD_REQUEST,
+    )
 
 
 def handler_404(request, exception):
@@ -50,7 +53,10 @@ def handler_404(request, exception):
 
 def handler_500(request: HttpRequest) -> JsonResponse:
     return JsonResponse(
-        data={'message': "We're sorry, but something went wrong on our end", 'errors': None},
+        data={
+            'message': "We're sorry, but something went wrong on our end",
+            'errors': None,
+        },
         status=status.HTTP_500_INTERNAL_SERVER_ERROR,
     )
 
