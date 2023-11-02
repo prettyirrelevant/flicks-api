@@ -11,40 +11,59 @@ class Migration(migrations.Migration):
 
     operations = [
         migrations.CreateModel(
-            name='Webhook',
+            name="Webhook",
             fields=[
                 (
-                    'id',
+                    "id",
                     models.UUIDField(
-                        default=uuid.uuid4, editable=False, primary_key=True, serialize=False, verbose_name='id'
+                        default=uuid.uuid4,
+                        editable=False,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="id",
                     ),
                 ),
-                ('created_at', models.DateTimeField(auto_now_add=True, db_index=True, verbose_name='created at')),
-                ('updated_at', models.DateTimeField(auto_now=True, db_index=True, verbose_name='updated at')),
-                ('payload', models.JSONField(verbose_name='payload')),
-                ('message_id', models.CharField(max_length=100, unique=True, verbose_name='message identifier')),
                 (
-                    'status',
+                    "created_at",
+                    models.DateTimeField(
+                        auto_now_add=True, db_index=True, verbose_name="created at"
+                    ),
+                ),
+                (
+                    "updated_at",
+                    models.DateTimeField(
+                        auto_now=True, db_index=True, verbose_name="updated at"
+                    ),
+                ),
+                ("payload", models.JSONField(verbose_name="payload")),
+                (
+                    "message_id",
                     models.CharField(
-                        choices=[('pending', 'Pending'), ('completed', 'Completed')],
-                        max_length=10,
-                        verbose_name='status',
+                        max_length=100, unique=True, verbose_name="message identifier"
                     ),
                 ),
                 (
-                    'notification_type',
+                    "status",
+                    models.CharField(
+                        choices=[("pending", "Pending"), ("completed", "Completed")],
+                        max_length=10,
+                        verbose_name="status",
+                    ),
+                ),
+                (
+                    "notification_type",
                     models.CharField(
                         choices=[
-                            ('transfers', 'Transfers'),
-                            ('subscription confirmation', 'Subscription Confirmation'),
+                            ("transfers", "Transfers"),
+                            ("subscription confirmation", "Subscription Confirmation"),
                         ],
                         max_length=50,
-                        verbose_name='notification type',
+                        verbose_name="notification type",
                     ),
                 ),
             ],
             options={
-                'abstract': False,
+                "abstract": False,
             },
         ),
     ]

@@ -22,7 +22,7 @@ class PreSignedURLSerializer(serializers.Serializer):
 class PreSignedURLListSerializer(serializers.Serializer):
     files = PreSignedURLSerializer(many=True)
 
-    def validate_files(self, value):  # noqa: PLR6301
+    def validate_files(self, value):
         if len(value) > settings.MAX_FILE_UPLOAD_PER_REQUEST:
             raise serializers.ValidationError('Max file upload per request exceeded')
 
@@ -67,14 +67,10 @@ class CreateContentSerializer(serializers.Serializer):
             media = validated_data.pop('media')
             content = Content.objects.create(**validated_data, creator=creator)
             for entry in media:
-                Media.objects.create(
-                    content=content,
-                    s3_key=entry['s3_key'],
-                    media_type=entry['media_type'],
-                )
+                Media.objects.create(content=content, s3_key=entry['s3_key'], media_type=entry['media_type'])
             return content
 
-    def validate(self, attrs):  # noqa: PLR6301
+    def validate(self, attrs):
         if attrs['content_type'] == ContentType.PAID and attrs['price'] < Decimal('1.00'):
             raise serializers.ValidationError('Content with paywall must have a price of at least $1.00')
 

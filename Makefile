@@ -4,12 +4,13 @@ include .env.local
 
 lint:
 	isort $(LINT_PATHS) --diff --check-only
+	ruff format $(LINT_PATHS) --check
 	ruff $(LINT_PATHS)
 	pylint $(LINT_PATHS)
 
 format:
 	isort $(LINT_PATHS)
-	black $(LINT_PATHS)
+	ruff format $(LINT_PATHS)
 	ruff $(LINT_PATHS) --fix
 
 test:

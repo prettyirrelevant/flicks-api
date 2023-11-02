@@ -16,7 +16,7 @@ class WebhookView(APIView):
     permission_classes = (AllowAny,)
     parser_classes = (LowerCasePlainTextParser, UpperCasePlainTextParser)
 
-    def post(self, request, *args, **kwargs):  # noqa: PLR6301 ARG002
+    def post(self, request, *args, **kwargs):
         data = json.loads(request.data.decode('utf-8'), strict=False)
         if data['Type'] == 'SubscriptionConfirmation':
             with contextlib.suppress(IntegrityError):

@@ -16,8 +16,7 @@ class BaseSubscriptionSerializer(serializers.ModelSerializer):
     def handle_free_subscription(
         creator: 'Creator',
         current_subscription: Union[FreeSubscription, MonetarySubscription, NFTSubscription],
-    ) -> None:
-        ...
+    ) -> None: ...
 
     def get_current_subscription(
         self,
@@ -74,10 +73,7 @@ class BaseSubscriptionSerializer(serializers.ModelSerializer):
             creator.save(update_fields=['subscription_type'])
             current_subscription.save(update_fields=['status'])
 
-        instance, _ = subscription_model.objects.update_or_create(
-            creator=creator,
-            defaults=validated_data,
-        )
+        instance, _ = subscription_model.objects.update_or_create(creator=creator, defaults=validated_data)
         return instance
 
 
@@ -88,7 +84,10 @@ class DummySubscriptionSerializer(serializers.Serializer):
     collection_address = serializers.CharField(required=False)
     collection_image_url = serializers.CharField(required=False)
     collection_description = serializers.CharField(required=False)
-    type = serializers.ChoiceField(choices=SubscriptionType, required=True)  # noqa: A003
+    type = serializers.ChoiceField(  # noqa: A003
+        choices=SubscriptionType,
+        required=True,
+    )
     status = serializers.ChoiceField(choices=SubscriptionStatus, required=True)
     amount = serializers.DecimalField(max_digits=20, decimal_places=2, required=False)
 
@@ -114,10 +113,7 @@ class MonetarySubscriptionSerializer(BaseSubscriptionSerializer):
         creator: 'Creator',
         current_subscription: Union[FreeSubscription, MonetarySubscription, NFTSubscription],
     ) -> None:
-        SubscriptionDetail.objects.filter(
-            creator=creator,
-            subscription_id=current_subscription.id,
-        ).update(
+        SubscriptionDetail.objects.filter(creator=creator, subscription_id=current_subscription.id).update(
             status=SubscriptionDetailStatus.CANCELLED,
         )
 
@@ -145,10 +141,7 @@ class NFTSubscriptionSerializer(BaseSubscriptionSerializer):
         creator: 'Creator',
         current_subscription: Union[FreeSubscription, MonetarySubscription, NFTSubscription],
     ) -> None:
-        SubscriptionDetail.objects.filter(
-            creator=creator,
-            subscription_id=current_subscription.id,
-        ).update(
+        SubscriptionDetail.objects.filter(creator=creator, subscription_id=current_subscription.id).update(
             status=SubscriptionDetailStatus.CANCELLED,
         )
 

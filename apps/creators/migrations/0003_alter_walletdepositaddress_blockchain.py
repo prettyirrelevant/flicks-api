@@ -5,26 +5,26 @@ from django.db import migrations, models
 
 class Migration(migrations.Migration):
     dependencies = [
-        ('creators', '0002_alter_walletdepositaddress_address'),
+        ("creators", "0002_alter_walletdepositaddress_address"),
     ]
 
     operations = [
         migrations.AlterField(
-            model_name='walletdepositaddress',
-            name='blockchain',
+            model_name="walletdepositaddress",
+            name="blockchain",
             field=models.CharField(
                 choices=[
-                    ('TRX', 'Tron'),
-                    ('BASE', 'Base'),
-                    ('SOL', 'Solana'),
-                    ('MATIC', 'Matic'),
-                    ('ARB', 'Arbitrum'),
-                    ('ETH', 'Ethereum'),
-                    ('ALGO', 'Algorand'),
-                    ('AVAX', 'Avalanche'),
+                    ("TRX", "Tron"),
+                    ("BASE", "Base"),
+                    ("SOL", "Solana"),
+                    ("MATIC", "Matic"),
+                    ("ARB", "Arbitrum"),
+                    ("ETH", "Ethereum"),
+                    ("ALGO", "Algorand"),
+                    ("AVAX", "Avalanche"),
                 ],
                 max_length=100,
-                verbose_name='blockchain',
+                verbose_name="blockchain",
             ),
         ),
     ]

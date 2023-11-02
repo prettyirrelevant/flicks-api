@@ -63,7 +63,7 @@ class SubscriptionsAPIView(GenericAPIView, CreateModelMixin):
         response = self.create(request, *args, *kwargs)
         return success_response(data=response.data, status_code=response.status_code)
 
-    def get(self, request, *args, **kwargs):  # noqa: ARG002
+    def get(self, request, *args, **kwargs):
         nft_subscriptions = NFTSubscription.objects.filter(creator=self.request.user)
         nft_subscriptions_serializer = NFTSubscriptionSerializer(nft_subscriptions, many=True)
 
@@ -102,7 +102,7 @@ class SubscribeToCreatorAPIView(APIView):
 
         return creator
 
-    def post(self, request, *args, **kwargs):  # noqa: ARG002
+    def post(self, request, *args, **kwargs):
         creator = self.validate_creator_address()
         subscriber = request.user
 
@@ -120,10 +120,7 @@ class SubscribeToCreatorAPIView(APIView):
 
     @staticmethod
     def handle_free_subscription(creator: 'Creator', subscriber: 'Creator'):
-        subscription_info = SubscriptionDetail.objects.filter(
-            creator=creator,
-            subscriber=subscriber,
-        ).first()
+        subscription_info = SubscriptionDetail.objects.filter(creator=creator, subscriber=subscriber).first()
 
         # there's an active subscription to the creator
         if (
@@ -150,10 +147,7 @@ class SubscribeToCreatorAPIView(APIView):
         )
 
     def handle_nft_subscription(self, creator: 'Creator', subscriber: 'Creator'):
-        subscription_info = SubscriptionDetail.objects.filter(
-            creator=creator,
-            subscriber=subscriber,
-        ).first()
+        subscription_info = SubscriptionDetail.objects.filter(creator=creator, subscriber=subscriber).first()
 
         # there's an active subscription to the creator
         if (
@@ -198,10 +192,7 @@ class SubscribeToCreatorAPIView(APIView):
 
     @staticmethod
     def handle_monetary_subscription(creator: 'Creator', subscriber: 'Creator'):
-        subscription_info = SubscriptionDetail.objects.filter(
-            creator=creator,
-            subscriber=subscriber,
-        ).first()
+        subscription_info = SubscriptionDetail.objects.filter(creator=creator, subscriber=subscriber).first()
 
         # there's an active subscription to the creator
         if (

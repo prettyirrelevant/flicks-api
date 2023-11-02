@@ -7,7 +7,7 @@ from .tasks import fetch_blurhash_for_image
 
 
 @receiver(post_save, sender=Media)
-def get_blurhash(sender, instance, created, **kwargs):  # noqa: ARG001
+def get_blurhash(sender, instance, created, **kwargs):
     if not created:
         return
 

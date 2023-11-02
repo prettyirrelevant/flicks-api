@@ -5,13 +5,13 @@ from django.db import migrations, models
 
 class Migration(migrations.Migration):
     dependencies = [
-        ('creators', '0001_initial'),
+        ("creators", "0001_initial"),
     ]
 
     operations = [
         migrations.AlterField(
-            model_name='walletdepositaddress',
-            name='address',
-            field=models.CharField(max_length=200, verbose_name='address'),
+            model_name="walletdepositaddress",
+            name="address",
+            field=models.CharField(max_length=200, verbose_name="address"),
         ),
     ]

@@ -12,15 +12,7 @@ class Role(Enum):
 
 class RtcTokenBuilder:
     @staticmethod
-    def build_token_with_uid(
-        app_id,
-        app_certificate,
-        channel_name,
-        uid,
-        role,
-        token_expire,
-        privilege_expire=0,
-    ):  # pylint: disable=R0913
+    def build_token_with_uid(app_id, app_certificate, channel_name, uid, role, token_expire, privilege_expire=0):  # pylint: disable=R0913
         """
         Build the RTC token with uid.
         :param app_id: The App ID issued to you by Agora. Apply for a new App ID from Agora Dashboard if it is missing

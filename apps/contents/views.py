@@ -80,7 +80,7 @@ class ContentView(GenericAPIView):
         qs = super().get_queryset()
         return qs.filter(creator=self.request.user).order_by('-created_at')
 
-    def post(self, request, *args, **kwargs):  # noqa: ARG002
+    def post(self, request, *args, **kwargs):
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         serializer.save()
@@ -109,7 +109,7 @@ class ContentListAPIView(ListAPIView):
         address = self.kwargs['address']
         return qs.filter(creator__address=address)
 
-    def get(self, request, *args, **kwargs):  # noqa: PLR6301
+    def get(self, request, *args, **kwargs):
         response = super().get(request, *args, **kwargs)
         return success_response(response.data, response.status_code)
 
@@ -118,7 +118,7 @@ class PayForContentAPIView(APIView):
     permission_classes = (IsAuthenticated, IsSubscribedToCreator)
     queryset = Content.objects.filter(content_type=ContentType.PAID)
 
-    def post(self, request, *args, **kwargs):  # noqa: ARG002
+    def post(self, request, *args, **kwargs):
         content = self.get_object()
         payer = request.user
         if payer.wallet.balance < content.price:
@@ -160,7 +160,7 @@ class LivestreamView(GenericAPIView, ListModelMixin):
     def get_queryset(self):
         return Livestream.objects.filter(creator=self.request.user).order_by('-created_at')
 
-    def post(self, request, *args, **kwargs):  # noqa: ARG002
+    def post(self, request, *args, **kwargs):
         serializer = self.get_serializer(data=self.request.data)
         serializer.is_valid(raise_exception=True)
         serializer.save()
@@ -168,11 +168,7 @@ class LivestreamView(GenericAPIView, ListModelMixin):
 
     def patch(self, request, stream_id):
         stream = get_object_or_404(self.get_queryset(), id=stream_id)
-        serializer = self.get_serializer(
-            partial=True,
-            instance=stream,
-            data=request.data,
-        )
+        serializer = self.get_serializer(partial=True, instance=stream, data=request.data)
         serializer.is_valid(raise_exception=True)
         serializer.save()
         return success_response({'message': 'livestream updated successfully'})
@@ -241,12 +237,12 @@ class LikesAPIView(APIView):
 
         return obj
 
-    def post(self, request, *args, **kwargs):  # noqa: ARG002
+    def post(self, request, *args, **kwargs):
         content = self.get_object()
         content.likes.add(request.user)
         return success_response('Content liked successfully')
 
-    def delete(self, request, *args, **kwargs):  # noqa: ARG002
+    def delete(self, request, *args, **kwargs):
         content = self.get_object()
         try:
             content.likes.remove(request.user)
@@ -276,7 +272,7 @@ class CreateCommentAPIVIew(GenericAPIView):
 
         return obj
 
-    def post(self, request, *args, **kwargs):  # noqa: ARG002
+    def post(self, request, *args, **kwargs):
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         serializer.save()
@@ -293,7 +289,7 @@ class DeleteCommentAPIView(APIView):
     queryset = Comment.objects.get_queryset()
     permission_classes = (IsAuthenticated, IsCommentOwner)
 
-    def delete(self, request, *args, **kwargs):  # noqa: ARG002
+    def delete(self, request, *args, **kwargs):
         obj = self.get_object()
         obj.delete()
 

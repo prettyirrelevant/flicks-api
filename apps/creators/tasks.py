@@ -17,10 +17,7 @@ from utils.constants import MINIMUM_ALLOWED_DEPOSIT_AMOUNT
 from .choices import Blockchain
 from .models import Wallet, WalletDepositAddress
 
-circle_api = CircleAPI(
-    api_key=settings.CIRCLE_API_KEY,
-    base_url=settings.CIRCLE_API_BASE_URL,
-)
+circle_api = CircleAPI(api_key=settings.CIRCLE_API_KEY, base_url=settings.CIRCLE_API_BASE_URL)
 
 
 @db_task()

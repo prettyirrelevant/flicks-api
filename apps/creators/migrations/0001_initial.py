@@ -14,18 +14,32 @@ class Migration(migrations.Migration):
 
     operations = [
         migrations.CreateModel(
-            name='Creator',
+            name="Creator",
             fields=[
                 (
-                    'id',
+                    "id",
                     models.UUIDField(
-                        default=uuid.uuid4, editable=False, primary_key=True, serialize=False, verbose_name='id'
+                        default=uuid.uuid4,
+                        editable=False,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="id",
                     ),
                 ),
-                ('created_at', models.DateTimeField(auto_now_add=True, db_index=True, verbose_name='created at')),
-                ('updated_at', models.DateTimeField(auto_now=True, db_index=True, verbose_name='updated at')),
                 (
-                    'address',
+                    "created_at",
+                    models.DateTimeField(
+                        auto_now_add=True, db_index=True, verbose_name="created at"
+                    ),
+                ),
+                (
+                    "updated_at",
+                    models.DateTimeField(
+                        auto_now=True, db_index=True, verbose_name="updated at"
+                    ),
+                ),
+                (
+                    "address",
                     models.CharField(
                         max_length=44,
                         unique=True,
@@ -33,113 +47,175 @@ class Migration(migrations.Migration):
                             django.core.validators.MinLengthValidator(32),
                             django.core.validators.MaxLengthValidator(44),
                         ],
-                        verbose_name='address',
+                        verbose_name="address",
                     ),
                 ),
-                ('bio', models.CharField(default='', max_length=200, verbose_name='bio')),
-                ('image_url', models.URLField(verbose_name='image url')),
-                ('banner_url', models.URLField(verbose_name='banner url')),
-                ('social_links', models.JSONField(default=dict, verbose_name='socials')),
-                ('moniker', models.TextField(unique=True, verbose_name='moniker')),
-                ('is_suspended', models.BooleanField(blank=True, default=False, verbose_name='is suspended')),
-                ('suspension_reason', models.TextField(default='', verbose_name='suspension reason')),
                 (
-                    'subscription_type',
-                    models.CharField(
-                        choices=[('nft', 'Nft'), ('free', 'Free'), ('monetary', 'Monetary')],
-                        max_length=8,
-                        verbose_name='subscription type',
+                    "bio",
+                    models.CharField(default="", max_length=200, verbose_name="bio"),
+                ),
+                ("image_url", models.URLField(verbose_name="image url")),
+                ("banner_url", models.URLField(verbose_name="banner url")),
+                (
+                    "social_links",
+                    models.JSONField(default=dict, verbose_name="socials"),
+                ),
+                ("moniker", models.TextField(unique=True, verbose_name="moniker")),
+                (
+                    "is_suspended",
+                    models.BooleanField(
+                        blank=True, default=False, verbose_name="is suspended"
                     ),
                 ),
-                ('is_verified', models.BooleanField(default=False, verbose_name='is verified')),
+                (
+                    "suspension_reason",
+                    models.TextField(default="", verbose_name="suspension reason"),
+                ),
+                (
+                    "subscription_type",
+                    models.CharField(
+                        choices=[
+                            ("nft", "Nft"),
+                            ("free", "Free"),
+                            ("monetary", "Monetary"),
+                        ],
+                        max_length=8,
+                        verbose_name="subscription type",
+                    ),
+                ),
+                (
+                    "is_verified",
+                    models.BooleanField(default=False, verbose_name="is verified"),
+                ),
             ],
             options={
-                'abstract': False,
+                "abstract": False,
             },
         ),
         migrations.CreateModel(
-            name='Wallet',
+            name="Wallet",
             fields=[
                 (
-                    'id',
+                    "id",
                     models.UUIDField(
-                        default=uuid.uuid4, editable=False, primary_key=True, serialize=False, verbose_name='id'
+                        default=uuid.uuid4,
+                        editable=False,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="id",
                     ),
                 ),
-                ('created_at', models.DateTimeField(auto_now_add=True, db_index=True, verbose_name='created at')),
-                ('updated_at', models.DateTimeField(auto_now=True, db_index=True, verbose_name='updated at')),
                 (
-                    'balance',
+                    "created_at",
+                    models.DateTimeField(
+                        auto_now_add=True, db_index=True, verbose_name="created at"
+                    ),
+                ),
+                (
+                    "updated_at",
+                    models.DateTimeField(
+                        auto_now=True, db_index=True, verbose_name="updated at"
+                    ),
+                ),
+                (
+                    "balance",
                     models.DecimalField(
-                        decimal_places=2, default=Decimal('0.00'), max_digits=20, verbose_name='balance'
+                        decimal_places=2,
+                        default=Decimal("0.00"),
+                        max_digits=20,
+                        verbose_name="balance",
                     ),
                 ),
                 (
-                    'provider_id',
-                    models.CharField(max_length=100, unique=True, verbose_name='circle provider identifier'),
+                    "provider_id",
+                    models.CharField(
+                        max_length=100,
+                        unique=True,
+                        verbose_name="circle provider identifier",
+                    ),
                 ),
                 (
-                    'creator',
+                    "creator",
                     models.OneToOneField(
                         blank=True,
                         null=True,
                         on_delete=django.db.models.deletion.SET_NULL,
-                        related_name='wallet',
-                        to='creators.creator',
-                        verbose_name='creator',
+                        related_name="wallet",
+                        to="creators.creator",
+                        verbose_name="creator",
                     ),
                 ),
             ],
             options={
-                'abstract': False,
+                "abstract": False,
             },
         ),
         migrations.CreateModel(
-            name='WalletDepositAddress',
+            name="WalletDepositAddress",
             fields=[
                 (
-                    'id',
+                    "id",
                     models.UUIDField(
-                        default=uuid.uuid4, editable=False, primary_key=True, serialize=False, verbose_name='id'
+                        default=uuid.uuid4,
+                        editable=False,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="id",
                     ),
                 ),
-                ('created_at', models.DateTimeField(auto_now_add=True, db_index=True, verbose_name='created at')),
-                ('updated_at', models.DateTimeField(auto_now=True, db_index=True, verbose_name='updated at')),
-                ('address', models.CharField(max_length=200, unique=True, verbose_name='address')),
                 (
-                    'blockchain',
+                    "created_at",
+                    models.DateTimeField(
+                        auto_now_add=True, db_index=True, verbose_name="created at"
+                    ),
+                ),
+                (
+                    "updated_at",
+                    models.DateTimeField(
+                        auto_now=True, db_index=True, verbose_name="updated at"
+                    ),
+                ),
+                (
+                    "address",
+                    models.CharField(
+                        max_length=200, unique=True, verbose_name="address"
+                    ),
+                ),
+                (
+                    "blockchain",
                     models.CharField(
                         choices=[
-                            ('TRX', 'Tron'),
-                            ('BASE', 'Base'),
-                            ('SOL', 'Solana'),
-                            ('MATIC', 'Matic'),
-                            ('OP', 'Optimism'),
-                            ('ARB', 'Arbitrum'),
-                            ('ETH', 'Ethereum'),
-                            ('ALGO', 'Algorand'),
-                            ('AVAX', 'Avalanche'),
+                            ("TRX", "Tron"),
+                            ("BASE", "Base"),
+                            ("SOL", "Solana"),
+                            ("MATIC", "Matic"),
+                            ("OP", "Optimism"),
+                            ("ARB", "Arbitrum"),
+                            ("ETH", "Ethereum"),
+                            ("ALGO", "Algorand"),
+                            ("AVAX", "Avalanche"),
                         ],
                         max_length=100,
-                        verbose_name='blockchain',
+                        verbose_name="blockchain",
                     ),
                 ),
                 (
-                    'wallet',
+                    "wallet",
                     models.ForeignKey(
                         db_index=False,
                         on_delete=django.db.models.deletion.CASCADE,
-                        related_name='deposit_addresses',
-                        to='creators.wallet',
-                        verbose_name='wallet',
+                        related_name="deposit_addresses",
+                        to="creators.wallet",
+                        verbose_name="wallet",
                     ),
                 ),
             ],
         ),
         migrations.AddConstraint(
-            model_name='walletdepositaddress',
+            model_name="walletdepositaddress",
             constraint=models.UniqueConstraint(
-                fields=('address', 'wallet', 'blockchain'), name='wallet_address_and_chain_unique'
+                fields=("address", "wallet", "blockchain"),
+                name="wallet_address_and_chain_unique",
             ),
         ),
     ]

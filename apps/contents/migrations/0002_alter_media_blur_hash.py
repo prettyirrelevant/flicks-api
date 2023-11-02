@@ -5,13 +5,13 @@ from django.db import migrations, models
 
 class Migration(migrations.Migration):
     dependencies = [
-        ('contents', '0001_initial'),
+        ("contents", "0001_initial"),
     ]
 
     operations = [
         migrations.AlterField(
-            model_name='media',
-            name='blur_hash',
-            field=models.TextField(default='', verbose_name='media blur hash'),
+            model_name="media",
+            name="blur_hash",
+            field=models.TextField(default="", verbose_name="media blur hash"),
         ),
     ]

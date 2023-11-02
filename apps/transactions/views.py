@@ -21,6 +21,6 @@ class TransactionView(ListAPIView):
             .order_by('-created_at')
         )
 
-    def get(self, request, *args, **kwargs):  # noqa: PLR6301
+    def get(self, request, *args, **kwargs):
         response = super().get(request, *args, **kwargs)
         return success_response(data=response.data, status_code=response.status_code)

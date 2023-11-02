@@ -32,14 +32,13 @@ def nft_subscriptions_renewal_check():
         five_minutes_from_now = timezone.now() + timedelta(minutes=5)
         thirty_minutes_from_now = timezone.now() + timedelta(minutes=30)
 
-        if thirty_minutes_from_now < detail.expires_at <= an_hour_from_now:  # noqa: SIM114
-            process_subscription_detail_renewal(detail)
-
-        elif five_minutes_from_now < detail.expires_at <= thirty_minutes_from_now:
-            process_subscription_detail_renewal(detail)
-
-        elif detail.expires_at <= five_minutes_from_now:
-            process_subscription_detail_renewal(detail, is_last_interval=True)
+        if (
+            (thirty_minutes_from_now < detail.expires_at <= an_hour_from_now)
+            or (five_minutes_from_now < detail.expires_at <= thirty_minutes_from_now)
+            or (detail.expires_at <= five_minutes_from_now)
+        ):
+            is_last_interval = detail.expires_at <= five_minutes_from_now
+            process_subscription_detail_renewal(detail, is_last_interval)
 
 
 @db_periodic_task(crontab(minute='*/10'))
@@ -57,23 +56,22 @@ def monetary_subscriptions_renewal_check():
             three_days_from_now = timezone.now() + timedelta(days=3)
             five_minutes_from_now = timezone.now() + timedelta(minutes=5)
 
-            if two_days_from_now < detail.expires_at <= three_days_from_now:  # noqa: SIM114
-                process_subscription_detail_renewal(detail)
-
-            elif one_day_from_now < detail.expires_at <= two_days_from_now:  # noqa: SIM114
-                process_subscription_detail_renewal(detail)
-
-            elif five_minutes_from_now < detail.expires_at <= one_day_from_now:
-                process_subscription_detail_renewal(detail)
-
-            elif detail.expires_at <= five_minutes_from_now:
-                process_subscription_detail_renewal(detail, is_last_interval=True)
+            if (
+                (two_days_from_now < detail.expires_at <= three_days_from_now)
+                or (one_day_from_now < detail.expires_at <= two_days_from_now)
+                or (five_minutes_from_now < detail.expires_at <= one_day_from_now)
+            ):
+                is_last_interval = detail.expires_at <= five_minutes_from_now
+                process_subscription_detail_renewal(detail, is_last_interval)
 
     except Exception:
         logger.exception('An error occurred in monetary_subscriptions_renewal_check')
 
 
-def process_subscription_detail_renewal(instance, is_last_interval=False):  # noqa: FBT002
+def process_subscription_detail_renewal(
+    instance,
+    is_last_interval=False,  # noqa: FBT002
+):
     # The current subscription might have changed since the last time the subscriber renewed. We need to check that.
     if instance.creator.subscription_type == SubscriptionType.FREE:
         subscription = FreeSubscription.objects.get(created_by=instance.creator)
@@ -107,10 +105,7 @@ def process_subscription_detail_renewal(instance, is_last_interval=False):  # no
             instance.save()
             return
 
-        instance.subscriber.wallet.transfer(
-            amount=subscription.amount,
-            recipient=instance.creator.wallet,
-        )
+        instance.subscriber.wallet.transfer(amount=subscription.amount, recipient=instance.creator.wallet)
         Transaction.create_subscription(
             creator=instance.creator,
             subscriber=instance.subscriber,
