@@ -6,8 +6,8 @@ from django.utils import timezone
 
 from rest_framework import status
 from rest_framework.views import APIView
-from rest_framework.mixins import ListModelMixin
 from rest_framework.generics import ListAPIView, GenericAPIView, get_object_or_404
+from rest_framework.mixins import ListModelMixin, UpdateModelMixin, DestroyModelMixin, RetrieveModelMixin
 
 from apps.transactions.models import Transaction
 from apps.creators.permissions import IsAuthenticated
@@ -22,7 +22,7 @@ from utils.responses import error_response, success_response
 
 from .choices import ContentType
 from .models import Media, Comment, Content, Livestream
-from .permissions import IsCommentOwner, IsSubscribedToContent, IsSubscribedToCreator
+from .permissions import IsCommentOwner, IsLivestreamOwner, IsSubscribedToContent, IsSubscribedToCreator
 from .serializers import (
     MediaSerializer,
     ContentSerializer,
@@ -84,7 +84,7 @@ class ContentView(GenericAPIView):
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         serializer.save()
-        return success_response({'message': 'content created successfully'}, 201)
+        return success_response('content created successfully', 201)
 
     def patch(self, request, content_id):
         qs = self.get_queryset()
@@ -92,7 +92,7 @@ class ContentView(GenericAPIView):
         serializer = self.get_serializer(instance=content, data=request.data, partial=True)
         serializer.is_valid(raise_exception=True)
         serializer.save()
-        return success_response({'message': 'content updated successfully'})
+        return success_response('content updated successfully')
 
 
 class ContentListAPIView(ListAPIView):
@@ -164,18 +164,36 @@ class LivestreamView(GenericAPIView, ListModelMixin):
         serializer = self.get_serializer(data=self.request.data)
         serializer.is_valid(raise_exception=True)
         serializer.save()
-        return success_response({'message': 'livestream created successfully'}, 201)
-
-    def patch(self, request, stream_id):
-        stream = get_object_or_404(self.get_queryset(), id=stream_id)
-        serializer = self.get_serializer(partial=True, instance=stream, data=request.data)
-        serializer.is_valid(raise_exception=True)
-        serializer.save()
-        return success_response({'message': 'livestream updated successfully'})
+        return success_response(serializer.data, 201)
 
     def get(self, request, *args, **kwargs):
         response = self.list(request, *args, **kwargs)
         return success_response(response.data)
+
+
+class FetchUpdateDeleteLivestreamView(GenericAPIView, DestroyModelMixin, UpdateModelMixin, RetrieveModelMixin):
+    lookup_field = 'id'
+    serializer_class = LiveStreamSerializer
+    permission_classes = (IsAuthenticated,)
+    queryset = Livestream.objects.get_queryset()
+
+    def get_permissions(self):
+        if self.request.method in {'PATCH', 'DELETE'}:
+            return IsAuthenticated(), IsLivestreamOwner()
+
+        return super().get_permissions()
+
+    def patch(self, request, *args, **kwargs):
+        response = self.partial_update(request, *args, **kwargs)
+        return success_response(response.data, status_code=response.status_code)
+
+    def get(self, request, *args, **kwargs):
+        response = self.retrieve(request, *args, **kwargs)
+        return success_response(response.data, status_code=response.status_code)
+
+    def delete(self, request, *args, **kwargs):
+        response = self.destroy(request, *args, **kwargs)
+        return success_response(response.data, status_code=response.status_code)
 
 
 class JoinLivestreamView(APIView):

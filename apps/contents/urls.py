@@ -13,6 +13,7 @@ from .views import (
     CreateCommentAPIVIew,
     DeleteCommentAPIView,
     PayForContentAPIView,
+    FetchUpdateDeleteLivestreamView,
 )
 
 urlpatterns = [
@@ -20,7 +21,11 @@ urlpatterns = [
     path('discover', DiscoverView.as_view(), name='discover-view'),
     path('get-upload-urls', PreSignedURLView.as_view(), name='presigned-urls'),
     path('livestreams', LivestreamView.as_view(), name='livestream-view'),
-    path('livestreams/<uuid:stream_id>', LivestreamView.as_view(), name='update-livestream-view'),
+    path(
+        'livestreams/<uuid:stream_id>',
+        FetchUpdateDeleteLivestreamView.as_view(),
+        name='fetch-update-delete-livestream-view',
+    ),
     path('livestreams/<uuid:stream_id>/join', JoinLivestreamView.as_view(), name='join-livestream'),
     path('timeline', TimelineView.as_view(), name='timeline-view'),
     path('media/<str:address>', MediaView.as_view(), name='media-view'),
