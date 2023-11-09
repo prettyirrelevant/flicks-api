@@ -285,7 +285,8 @@ class ContentsTest(TestCase):
         # My Livestreams Test
         response = self.client.get(path='/contents/livestreams', headers=self.auth_header)
         self.assertEqual(response.status_code, 200)
-        self.assertEqual(len(response.json()['data']['results']), 2)
+        self.assertEqual(len(response.json()['results'][livestream.created_at.date().isoformat()]), 2)
+        self.assertEqual(list(response.json()['results'].keys()), [livestream.created_at.date().isoformat()])
 
         # Join Livestream Test
         response = self.client.get(path=f'/contents/livestreams/{livestream.id}/join', headers=self.auth_header)

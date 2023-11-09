@@ -1,4 +1,6 @@
 import logging
+import itertools
+from collections import defaultdict
 
 from django.conf import settings
 from django.db import transaction
@@ -153,9 +155,9 @@ class PayForContentAPIView(APIView):
 
 
 class LivestreamView(GenericAPIView, ListModelMixin):
+    serializer_class = LiveStreamSerializer
     permission_classes = (IsAuthenticated,)
     pagination_class = CustomCursorPagination
-    serializer_class = LiveStreamSerializer
 
     def get_queryset(self):
         return Livestream.objects.filter(creator=self.request.user).order_by('-created_at')
@@ -167,8 +169,22 @@ class LivestreamView(GenericAPIView, ListModelMixin):
         return success_response(serializer.data, 201)
 
     def get(self, request, *args, **kwargs):
-        response = self.list(request, *args, **kwargs)
-        return success_response(response.data)
+        queryset = self.filter_queryset(self.get_queryset())
+        page = self.paginate_queryset(queryset)
+        if page is not None:
+            data = self.group_livestreams(page)
+            return self.get_paginated_response(data)
+
+        data = self.group_livestreams(page)
+        return success_response(data)
+
+    def group_livestreams(self, results):
+        grouped_data = defaultdict(list)
+        for key, group in itertools.groupby(results, lambda x: x.created_at.date()):
+            for entry in group:
+                grouped_data[key.isoformat()].append(self.get_serializer(instance=entry).data)
+
+        return grouped_data
 
 
 class FetchUpdateDeleteLivestreamView(GenericAPIView, DestroyModelMixin, UpdateModelMixin, RetrieveModelMixin):
@@ -221,8 +237,8 @@ class JoinLivestreamView(APIView):
                 message='You are not subscribed to this creator',
             )
 
-        role = Role.PUBLISHER if stream.creator == self.request.user else Role.SUBSCRIBER
         token_builder = RtcTokenBuilder()
+        role = Role.PUBLISHER if stream.creator == self.request.user else Role.SUBSCRIBER
         token_expiration = (stream.start + stream.duration).timestamp()
         token = token_builder.build_token_with_user_account(
             role=role,
