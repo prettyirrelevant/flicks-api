@@ -25,7 +25,13 @@ from utils.responses import error_response, success_response
 
 from .choices import ContentType
 from .models import Media, Comment, Content, Livestream
-from .permissions import IsCommentOwner, IsLivestreamOwner, IsSubscribedToContent, IsSubscribedToCreator
+from .permissions import (
+    IsCommentOwner,
+    IsContentOwner,
+    IsLivestreamOwner,
+    IsSubscribedToContent,
+    IsSubscribedToCreator,
+)
 from .serializers import (
     MediaSerializer,
     ContentSerializer,
@@ -70,6 +76,13 @@ class ContentView(GenericAPIView):
     permission_classes = (IsAuthenticated,)
     pagination_class = CustomCursorPagination
 
+    def get_permissions(self):
+        permissions = super().get_permissions()
+        if self.request.method in {'DELETE', 'PATCH'}:
+            return [*permissions, IsContentOwner()]
+
+        return permissions
+
     def get_serializer_class(self):
         if self.request.method == 'POST':
             return CreateContentSerializer
@@ -98,10 +111,10 @@ class ContentView(GenericAPIView):
         return success_response('content updated successfully')
 
     def delete(self, request, content_id):
-        qs = self.get_queryset()
-        content = get_object_or_404(qs, id=content_id)
+        content = get_object_or_404(self.get_queryset(), id=content_id)
         if content.price != ZERO and content.purchases.exists():
             return error_response(
+                errors=[],
                 message='cannot delete a content that has already been purchased by at least one subscriber',
                 status_code=status.HTTP_403_FORBIDDEN,
             )

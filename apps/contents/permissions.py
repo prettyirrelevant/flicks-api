@@ -38,3 +38,8 @@ class IsCommentOwner(BasePermission):
 class IsLivestreamOwner(BasePermission):
     def has_object_permission(self, request, view, obj):
         return obj.creator == request.user
+
+
+class IsContentOwner(BasePermission):
+    def has_object_permission(self, request, view, obj):
+        return obj.creator == request.user
