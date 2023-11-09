@@ -26,7 +26,11 @@ class RequestMixin:
             response = self.session.request(method, url, params=params, json=data, headers=headers)
             response.raise_for_status()
         except requests.exceptions.RequestException as e:
-            logger.exception('Error occurred while making request to %s with error %s', url, e.response.json())
+            logger.exception(
+                'Error occurred while making request to %s with error %s',
+                url,
+                e.response.json(),
+            )
             return None
 
         return response.json()

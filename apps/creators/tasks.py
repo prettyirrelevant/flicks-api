@@ -17,10 +17,7 @@ from utils.constants import MINIMUM_ALLOWED_DEPOSIT_AMOUNT
 from .choices import Blockchain
 from .models import Wallet, WalletDepositAddress
 
-circle_api = CircleAPI(
-    api_key=settings.CIRCLE_API_KEY,
-    base_url=settings.CIRCLE_API_BASE_URL,
-)
+circle_api = CircleAPI(api_key=settings.CIRCLE_API_KEY, base_url=settings.CIRCLE_API_BASE_URL)
 
 
 @db_task()
@@ -52,7 +49,13 @@ def move_funds_to_master_wallet():
         if wallet_info_response is None:
             continue
 
-        usd_balance = next(filter(lambda x: x['currency'] == 'USD', wallet_info_response['data']['balances']), None)
+        usd_balance = next(
+            filter(
+                lambda x: x['currency'] == 'USD',
+                wallet_info_response['data']['balances'],
+            ),
+            None,
+        )
         if usd_balance is None:
             continue
 

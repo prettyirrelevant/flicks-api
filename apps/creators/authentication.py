@@ -10,7 +10,7 @@ from .models import Creator
 class Web3Authentication(TokenAuthentication):
     keyword = 'Signature'
 
-    def authenticate_credentials(self, key):  # noqa: PLR6301
+    def authenticate_credentials(self, key):
         try:
             addr, sig = key.split(':')
             public_key = Pubkey.from_string(addr)

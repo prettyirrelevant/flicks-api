@@ -31,7 +31,7 @@ class CreatorCreationAPIView(GenericAPIView):
     serializer_class = CreatorCreationSerializer
     permission_classes: ClassVar[list] = []
 
-    def post(self, request, *args, **kwargs):  # noqa: ARG002
+    def post(self, request, *args, **kwargs):
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
 
@@ -47,9 +47,7 @@ class CreatorAPIView(RetrieveAPIView):
     lookup_field = 'address'
     serializer_class = CreatorSerializer
     permission_classes: ClassVar[list] = []
-    queryset = Creator.objects.select_related(
-        'wallet',
-    ).prefetch_related(
+    queryset = Creator.objects.select_related('wallet').prefetch_related(
         'wallet__deposit_addresses',
         'contents',
         'subscribers',
@@ -57,7 +55,7 @@ class CreatorAPIView(RetrieveAPIView):
         'monetary_subscriptions',
     )
 
-    def retrieve(self, request, *args, **kwargs):  # noqa: PLR6301
+    def retrieve(self, request, *args, **kwargs):
         response = super().retrieve(request, *args, **kwargs)
         return success_response(data=response.data, status_code=response.status_code)
 
@@ -83,7 +81,7 @@ class SearchCreatorsAPIView(APIView):
             ),
         ],
     )
-    def get(self, request, *args, **kwargs):  # noqa: PLR6301 ARG002
+    def get(self, request, *args, **kwargs):
         q = request.query_params.get('q')
         if q is None:
             raise serializers.ValidationError('`q` query parameter is required.')
@@ -108,14 +106,18 @@ class MonikerAvailabilityAPIView(APIView):
             ),
         ],
     )
-    def get(self, request, *args, **kwargs):  # noqa: PLR6301 ARG002
+    def get(self, request, *args, **kwargs):
         q = request.query_params.get('q')
         if q is None:
             raise serializers.ValidationError('`q` query parameter is required.')
 
         qs = Creator.objects.filter(moniker=q.lower())
         if qs.exists():
-            return error_response(message='Moniker is already taken.', errors=[], status_code=status.HTTP_409_CONFLICT)
+            return error_response(
+                message='Moniker is already taken.',
+                errors=[],
+                status_code=status.HTTP_409_CONFLICT,
+            )
 
         return success_response(data='Moniker is available to use.')
 
@@ -125,17 +127,14 @@ class CreatorWithdrawalAPIView(GenericAPIView):
     serializer_class = WithdrawalSerializer
     queryset = Creator.objects.get_queryset()
 
-    def post(self, request, *args, **kwargs):  # noqa: ARG002
+    def post(self, request, *args, **kwargs):
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
 
         amount = serializer.validated_data['amount']
         with transaction.atomic():
             self.request.user.wallet.withdraw(amount)
-            circle_api = CircleAPI(
-                api_key=settings.CIRCLE_API_KEY,
-                base_url=settings.CIRCLE_API_BASE_URL,
-            )
+            circle_api = CircleAPI(api_key=settings.CIRCLE_API_KEY, base_url=settings.CIRCLE_API_BASE_URL)
 
             withdrawal_response = circle_api.make_withdrawal(
                 chain=Blockchain.SOLANA.value,

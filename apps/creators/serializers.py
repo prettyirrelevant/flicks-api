@@ -2,6 +2,7 @@ from solders.pubkey import Pubkey
 
 from django.conf import settings
 from django.utils import timezone
+from django.contrib.auth.models import AnonymousUser
 
 from rest_framework import serializers
 
@@ -34,11 +35,11 @@ class CreatorSerializer(serializers.ModelSerializer):
     subscribers_count = serializers.SerializerMethodField()
     subscription_info = serializers.SerializerMethodField()
 
-    def get_contents_count(self, obj):  # noqa: PLR6301
+    def get_contents_count(self, obj):
         return obj.contents.count()
 
     def get_is_subscribed(self, obj):
-        if not self.context['request'].user:
+        if isinstance(self.context['request'].user, AnonymousUser):
             return False
 
         status = SubscriptionDetail.objects.filter(
@@ -48,10 +49,10 @@ class CreatorSerializer(serializers.ModelSerializer):
         )
         return status.exists()
 
-    def get_subscribers_count(self, obj):  # noqa: PLR6301
+    def get_subscribers_count(self, obj):
         return obj.subscribers.filter(status=SubscriptionDetailStatus.ACTIVE, expires_at__gte=timezone.now()).count()
 
-    def get_subscription_info(self, obj):  # noqa: PLR6301
+    def get_subscription_info(self, obj):
         if obj.subscription_type == SubscriptionType.NFT:
             subscription = obj.nft_subscriptions.first()
             return {
@@ -110,14 +111,14 @@ class CreatorCreationSerializer(serializers.Serializer):
     moniker = serializers.CharField(max_length=5000)
     bio = serializers.CharField(max_length=200, allow_blank=True, default='')
 
-    def validate_address(self, value):  # noqa: PLR6301
+    def validate_address(self, value):
         public_key = Pubkey.from_string(value)
         if not public_key.is_on_curve():
             raise serializers.ValidationError('Invalid address provided.')
 
         return value
 
-    def validate(self, attrs):  # noqa: PLR6301
+    def validate(self, attrs):
         sharingan_service = SharinganService(settings.SHARINGAN_BASE_URL)
         response = sharingan_service.resolve_address_to_sns(attrs['address'])
         if response is None and attrs['moniker'].endswith('.sol'):

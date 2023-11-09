@@ -37,22 +37,21 @@ def custom_exception_handler(exception, context) -> Response | None:
             status_code=response.status_code,
         )
 
-    return error_response(
-        message=str(exception),
-        errors=None,
-        status_code=response.status_code,
+    return error_response(message=str(exception), errors=None, status_code=response.status_code)
+
+
+def handler_400(request, exception, *args, **kwargs):
+    return JsonResponse(
+        data={'message': 'Bad request', 'errors': None},
+        status=status.HTTP_400_BAD_REQUEST,
     )
 
 
-def handler_400(request, exception, *args, **kwargs):  # noqa: ARG001
-    return JsonResponse(data={'message': 'Bad request', 'errors': None}, status=status.HTTP_400_BAD_REQUEST)
-
-
-def handler_404(request, exception):  # noqa: ARG001
+def handler_404(request, exception):
     return JsonResponse(data={'message': 'Not found', 'errors': None}, status=status.HTTP_404_NOT_FOUND)
 
 
-def handler_500(request: HttpRequest) -> JsonResponse:  # noqa: ARG001
+def handler_500(request: HttpRequest) -> JsonResponse:
     return JsonResponse(
         data={
             'message': "We're sorry, but something went wrong on our end",
@@ -63,12 +62,12 @@ def handler_500(request: HttpRequest) -> JsonResponse:  # noqa: ARG001
 
 
 @api_view()
-def index_view(request):  # noqa: ARG001
+def index_view(request):
     return Response(status=status.HTTP_200_OK)
 
 
 class HttpAndHttpsOpenAPISchemaGenerator(OpenAPISchemaGenerator):
-    def get_schema(self, request=None, public=False):  # noqa: FBT002, PLR6301
+    def get_schema(self, request=None, public=False):  # noqa: FBT002
         schema = super().get_schema(request, public)
         schema.schemes = ['http', 'https']
         return schema

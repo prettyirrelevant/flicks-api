@@ -1,4 +1,6 @@
 import logging
+import itertools
+from collections import defaultdict
 
 from django.conf import settings
 from django.db import transaction
@@ -6,8 +8,8 @@ from django.utils import timezone
 
 from rest_framework import status
 from rest_framework.views import APIView
-from rest_framework.mixins import ListModelMixin
 from rest_framework.generics import ListAPIView, GenericAPIView, get_object_or_404
+from rest_framework.mixins import ListModelMixin, UpdateModelMixin, DestroyModelMixin, RetrieveModelMixin
 
 from apps.transactions.models import Transaction
 from apps.creators.permissions import IsAuthenticated
@@ -22,7 +24,7 @@ from utils.responses import error_response, success_response
 
 from .choices import ContentType
 from .models import Media, Comment, Content, Livestream
-from .permissions import IsCommentOwner, IsSubscribedToContent, IsSubscribedToCreator
+from .permissions import IsCommentOwner, IsLivestreamOwner, IsSubscribedToContent, IsSubscribedToCreator
 from .serializers import (
     MediaSerializer,
     ContentSerializer,
@@ -80,11 +82,11 @@ class ContentView(GenericAPIView):
         qs = super().get_queryset()
         return qs.filter(creator=self.request.user).order_by('-created_at')
 
-    def post(self, request, *args, **kwargs):  # noqa: ARG002
+    def post(self, request, *args, **kwargs):
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         serializer.save()
-        return success_response({'message': 'content created successfully'}, 201)
+        return success_response('content created successfully', 201)
 
     def patch(self, request, content_id):
         qs = self.get_queryset()
@@ -92,7 +94,7 @@ class ContentView(GenericAPIView):
         serializer = self.get_serializer(instance=content, data=request.data, partial=True)
         serializer.is_valid(raise_exception=True)
         serializer.save()
-        return success_response({'message': 'content updated successfully'})
+        return success_response('content updated successfully')
 
 
 class ContentListAPIView(ListAPIView):
@@ -109,7 +111,7 @@ class ContentListAPIView(ListAPIView):
         address = self.kwargs['address']
         return qs.filter(creator__address=address)
 
-    def get(self, request, *args, **kwargs):  # noqa: PLR6301
+    def get(self, request, *args, **kwargs):
         response = super().get(request, *args, **kwargs)
         return success_response(response.data, response.status_code)
 
@@ -118,7 +120,7 @@ class PayForContentAPIView(APIView):
     permission_classes = (IsAuthenticated, IsSubscribedToCreator)
     queryset = Content.objects.filter(content_type=ContentType.PAID)
 
-    def post(self, request, *args, **kwargs):  # noqa: ARG002
+    def post(self, request, *args, **kwargs):
         content = self.get_object()
         payer = request.user
         if payer.wallet.balance < content.price:
@@ -153,33 +155,61 @@ class PayForContentAPIView(APIView):
 
 
 class LivestreamView(GenericAPIView, ListModelMixin):
+    serializer_class = LiveStreamSerializer
     permission_classes = (IsAuthenticated,)
     pagination_class = CustomCursorPagination
-    serializer_class = LiveStreamSerializer
 
     def get_queryset(self):
         return Livestream.objects.filter(creator=self.request.user).order_by('-created_at')
 
-    def post(self, request, *args, **kwargs):  # noqa: ARG002
+    def post(self, request, *args, **kwargs):
         serializer = self.get_serializer(data=self.request.data)
         serializer.is_valid(raise_exception=True)
         serializer.save()
-        return success_response({'message': 'livestream created successfully'}, 201)
-
-    def patch(self, request, stream_id):
-        stream = get_object_or_404(self.get_queryset(), id=stream_id)
-        serializer = self.get_serializer(
-            partial=True,
-            instance=stream,
-            data=request.data,
-        )
-        serializer.is_valid(raise_exception=True)
-        serializer.save()
-        return success_response({'message': 'livestream updated successfully'})
+        return success_response(serializer.data, 201)
 
     def get(self, request, *args, **kwargs):
-        response = self.list(request, *args, **kwargs)
-        return success_response(response.data)
+        queryset = self.filter_queryset(self.get_queryset())
+        page = self.paginate_queryset(queryset)
+        if page is not None:
+            data = self.group_livestreams(page)
+            return self.get_paginated_response(data)
+
+        data = self.group_livestreams(page)
+        return success_response(data)
+
+    def group_livestreams(self, results):
+        grouped_data = defaultdict(list)
+        for key, group in itertools.groupby(results, lambda x: x.created_at.date()):
+            for entry in group:
+                grouped_data[key.isoformat()].append(self.get_serializer(instance=entry).data)
+
+        return grouped_data
+
+
+class FetchUpdateDeleteLivestreamView(GenericAPIView, DestroyModelMixin, UpdateModelMixin, RetrieveModelMixin):
+    lookup_field = 'id'
+    serializer_class = LiveStreamSerializer
+    permission_classes = (IsAuthenticated,)
+    queryset = Livestream.objects.get_queryset()
+
+    def get_permissions(self):
+        if self.request.method in {'PATCH', 'DELETE'}:
+            return IsAuthenticated(), IsLivestreamOwner()
+
+        return super().get_permissions()
+
+    def patch(self, request, *args, **kwargs):
+        response = self.partial_update(request, *args, **kwargs)
+        return success_response(response.data, status_code=response.status_code)
+
+    def get(self, request, *args, **kwargs):
+        response = self.retrieve(request, *args, **kwargs)
+        return success_response(response.data, status_code=response.status_code)
+
+    def delete(self, request, *args, **kwargs):
+        response = self.destroy(request, *args, **kwargs)
+        return success_response(response.data, status_code=response.status_code)
 
 
 class JoinLivestreamView(APIView):
@@ -207,8 +237,8 @@ class JoinLivestreamView(APIView):
                 message='You are not subscribed to this creator',
             )
 
-        role = Role.PUBLISHER if stream.creator == self.request.user else Role.SUBSCRIBER
         token_builder = RtcTokenBuilder()
+        role = Role.PUBLISHER if stream.creator == self.request.user else Role.SUBSCRIBER
         token_expiration = (stream.start + stream.duration).timestamp()
         token = token_builder.build_token_with_user_account(
             role=role,
@@ -219,7 +249,13 @@ class JoinLivestreamView(APIView):
             privilege_expire=token_expiration,
             app_certificate=settings.AGORA_APP_CERTIFICATE,
         )
-        return success_response({'token': token, 'channel_name': str(stream.id), 'user_account': request.user.address})
+        return success_response(
+            {
+                'token': token,
+                'channel_name': str(stream.id),
+                'user_account': request.user.address,
+            }
+        )
 
 
 class LikesAPIView(APIView):
@@ -241,12 +277,12 @@ class LikesAPIView(APIView):
 
         return obj
 
-    def post(self, request, *args, **kwargs):  # noqa: ARG002
+    def post(self, request, *args, **kwargs):
         content = self.get_object()
         content.likes.add(request.user)
         return success_response('Content liked successfully')
 
-    def delete(self, request, *args, **kwargs):  # noqa: ARG002
+    def delete(self, request, *args, **kwargs):
         content = self.get_object()
         try:
             content.likes.remove(request.user)
@@ -276,7 +312,7 @@ class CreateCommentAPIVIew(GenericAPIView):
 
         return obj
 
-    def post(self, request, *args, **kwargs):  # noqa: ARG002
+    def post(self, request, *args, **kwargs):
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         serializer.save()
@@ -293,7 +329,7 @@ class DeleteCommentAPIView(APIView):
     queryset = Comment.objects.get_queryset()
     permission_classes = (IsAuthenticated, IsCommentOwner)
 
-    def delete(self, request, *args, **kwargs):  # noqa: ARG002
+    def delete(self, request, *args, **kwargs):
         obj = self.get_object()
         obj.delete()
 
@@ -325,10 +361,11 @@ class TimelineView(ListAPIView):
     pagination_class = CustomCursorPagination
 
     def get_queryset(self):
-        subscribed_creators = self.request.user.subscriptions.filter(status=SubscriptionDetailStatus.ACTIVE).values(
-            'creator',
-        )
-        return Content.objects.filter(creator__in=subscribed_creators).order_by('-created_at')
+        return Content.objects.filter(
+            creator__in=self.request.user.subscriptions.filter(status=SubscriptionDetailStatus.ACTIVE).values(
+                'creator',
+            ),
+        ).order_by('-created_at')
 
 
 class MediaView(ListAPIView):

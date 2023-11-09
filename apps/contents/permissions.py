@@ -1,5 +1,3 @@
-from django.utils import timezone
-
 from rest_framework.permissions import BasePermission
 
 from apps.subscriptions.models import SubscriptionDetail
@@ -9,7 +7,7 @@ from .choices import ContentType
 
 
 class IsSubscribedToCreator(BasePermission):
-    def has_object_permission(self, request, view, obj):  # noqa: PLR6301 ARG002
+    def has_object_permission(self, request, view, obj):
         if request.user == obj.creator:
             return True
 
@@ -22,7 +20,7 @@ class IsSubscribedToCreator(BasePermission):
 
 
 class IsSubscribedToContent(BasePermission):
-    def has_object_permission(self, request, view, obj):  # noqa: PLR6301 ARG002
+    def has_object_permission(self, request, view, obj):
         if obj.content_type == ContentType.FREE:
             return True
 
@@ -33,5 +31,10 @@ class IsSubscribedToContent(BasePermission):
 
 
 class IsCommentOwner(BasePermission):
-    def has_object_permission(self, request, view, obj):  # noqa: PLR6301 ARG002
+    def has_object_permission(self, request, view, obj):
         return obj.author == request.user
+
+
+class IsLivestreamOwner(BasePermission):
+    def has_object_permission(self, request, view, obj):
+        return obj.creator == request.user

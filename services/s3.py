@@ -14,12 +14,7 @@ class S3Service:
         self.secret_key = secret_key
         self.bucket = bucket
 
-    def get_pre_signed_upload_url(
-        self,
-        key: str,
-        file_type: str,
-        expiration,
-    ):
+    def get_pre_signed_upload_url(self, key: str, file_type: str, expiration):
         if file_type == MediaType.IMAGE:
             conditions = [['content-length-range', 0, MAX_IMAGE_FILE_SIZE]]
         else:

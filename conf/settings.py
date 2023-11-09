@@ -50,7 +50,13 @@ THIRD_PARTY_APPS = [
     'huey.contrib.djhuey',
 ]
 
-LOCAL_APPS: list[str] = ['apps.creators', 'apps.webhooks', 'apps.transactions', 'apps.contents', 'apps.subscriptions']
+LOCAL_APPS: list[str] = [
+    'apps.creators',
+    'apps.webhooks',
+    'apps.transactions',
+    'apps.contents',
+    'apps.subscriptions',
+]
 
 INSTALLED_APPS = DJANGO_APPS + THIRD_PARTY_APPS + LOCAL_APPS
 
@@ -101,11 +107,7 @@ TEMPLATES = [
 # ==============================================================================
 # STORAGES SETTINGS
 # ==============================================================================
-STORAGES = {
-    'staticfiles': {
-        'BACKEND': 'whitenoise.storage.CompressedManifestStaticFilesStorage',
-    },
-}
+STORAGES = {'staticfiles': {'BACKEND': 'whitenoise.storage.CompressedManifestStaticFilesStorage'}}
 
 
 # ==============================================================================
@@ -113,9 +115,7 @@ STORAGES = {
 # https://docs.djangoproject.com/en/4.2/ref/settings/#databases
 # https://docs.djangoproject.com/en/4.2/ref/settings/#default-auto-field
 # ==============================================================================
-DATABASES = {
-    'default': env.db('DATABASE_URL'),
-}
+DATABASES = {'default': env.db('DATABASE_URL')}
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
@@ -125,18 +125,10 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 # https://docs.djangoproject.com/en/4.2/ref/settings/#auth-password-validators
 # ==============================================================================
 AUTH_PASSWORD_VALIDATORS = [
-    {
-        'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator',
-    },
-    {
-        'NAME': 'django.contrib.auth.password_validation.MinimumLengthValidator',
-    },
-    {
-        'NAME': 'django.contrib.auth.password_validation.CommonPasswordValidator',
-    },
-    {
-        'NAME': 'django.contrib.auth.password_validation.NumericPasswordValidator',
-    },
+    {'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator'},
+    {'NAME': 'django.contrib.auth.password_validation.MinimumLengthValidator'},
+    {'NAME': 'django.contrib.auth.password_validation.CommonPasswordValidator'},
+    {'NAME': 'django.contrib.auth.password_validation.NumericPasswordValidator'},
 ]
 
 # ==============================================================================
@@ -201,11 +193,7 @@ CORS_ALLOW_ALL_ORIGINS = True
 # ==============================================================================
 connection_pool = ConnectionPool.from_url(env.str('HUEY_REDIS_URL'))
 connection_pool.max_connections = env.int('HUEY_STORAGE_MAX_CONNECTIONS', default=5)
-HUEY = RedisHuey(
-    name=__name__,
-    immediate=env.bool('HUEY_IMMEDIATE'),
-    connection_pool=connection_pool,
-)
+HUEY = RedisHuey(name=__name__, immediate=env.bool('HUEY_IMMEDIATE'), connection_pool=connection_pool)
 
 
 # ==============================================================================
@@ -243,13 +231,7 @@ SALT_KEY = env.list('SALT_KEY')
 # ==============================================================================
 SWAGGER_SETTINGS = {
     'USE_SESSION_AUTH': False,
-    'SECURITY_DEFINITIONS': {
-        'wallet_signature': {
-            'type': 'apiKey',
-            'in': 'header',
-            'name': 'Authorization',
-        },
-    },
+    'SECURITY_DEFINITIONS': {'wallet_signature': {'type': 'apiKey', 'in': 'header', 'name': 'Authorization'}},
 }
 
 # ==============================================================================
@@ -288,16 +270,14 @@ if not DEBUG:
         'version': 1,
         'disable_existing_loggers': False,
         'formatters': {
-            'verbose': {
-                'format': '[%(asctime)s] %(levelname)s:%(name)s:%(process)d:%(threadName)s: %(message)s',
-            },
+            'verbose': {'format': '[%(asctime)s] %(levelname)s:%(name)s:%(process)d:%(threadName)s: %(message)s'},
         },
         'handlers': {
             'console': {
                 'level': 'DEBUG',
                 'class': 'logging.StreamHandler',
                 'formatter': 'verbose',
-            },
+            }
         },
         'root': {'level': 'INFO', 'handlers': ['console']},
         'loggers': {

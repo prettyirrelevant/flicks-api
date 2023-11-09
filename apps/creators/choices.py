@@ -6,7 +6,6 @@ class Blockchain(models.TextChoices):
     BASE = 'BASE'
     SOLANA = 'SOL'
     MATIC = 'MATIC'
-    OPTIMISM = 'OP'
     ARBITRUM = 'ARB'
     ETHEREUM = 'ETH'
     ALGORAND = 'ALGO'
