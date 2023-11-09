@@ -19,12 +19,19 @@ from apps.subscriptions.choices import SubscriptionDetailStatus
 from services.s3 import S3Service
 from services.agora.token_builder import Role, RtcTokenBuilder
 
+from utils.constants import ZERO
 from utils.pagination import CustomCursorPagination
 from utils.responses import error_response, success_response
 
 from .choices import ContentType
 from .models import Media, Comment, Content, Livestream
-from .permissions import IsCommentOwner, IsLivestreamOwner, IsSubscribedToContent, IsSubscribedToCreator
+from .permissions import (
+    IsCommentOwner,
+    IsContentOwner,
+    IsLivestreamOwner,
+    IsSubscribedToContent,
+    IsSubscribedToCreator,
+)
 from .serializers import (
     MediaSerializer,
     ContentSerializer,
@@ -69,6 +76,13 @@ class ContentView(GenericAPIView):
     permission_classes = (IsAuthenticated,)
     pagination_class = CustomCursorPagination
 
+    def get_permissions(self):
+        permissions = super().get_permissions()
+        if self.request.method in {'DELETE', 'PATCH'}:
+            return [*permissions, IsContentOwner()]
+
+        return permissions
+
     def get_serializer_class(self):
         if self.request.method == 'POST':
             return CreateContentSerializer
@@ -95,6 +109,18 @@ class ContentView(GenericAPIView):
         serializer.is_valid(raise_exception=True)
         serializer.save()
         return success_response('content updated successfully')
+
+    def delete(self, request, content_id):
+        content = get_object_or_404(self.get_queryset(), id=content_id)
+        if content.price != ZERO and content.purchases.exists():
+            return error_response(
+                errors=[],
+                message='cannot delete a content that has already been purchased by at least one subscriber',
+                status_code=status.HTTP_403_FORBIDDEN,
+            )
+
+        content.delete()
+        return success_response('content deleted successfully', status_code=status.HTTP_204_NO_CONTENT)
 
 
 class ContentListAPIView(ListAPIView):
