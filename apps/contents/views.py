@@ -120,7 +120,7 @@ class ContentView(GenericAPIView):
             )
 
         content.delete()
-        return success_response('content delete successfully', status_code=status.HTTP_204_NO_CONTENT)
+        return success_response('content deleted successfully', status_code=status.HTTP_204_NO_CONTENT)
 
 
 class ContentListAPIView(ListAPIView):
