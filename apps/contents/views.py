@@ -19,6 +19,7 @@ from apps.subscriptions.choices import SubscriptionDetailStatus
 from services.s3 import S3Service
 from services.agora.token_builder import Role, RtcTokenBuilder
 
+from utils.constants import ZERO
 from utils.pagination import CustomCursorPagination
 from utils.responses import error_response, success_response
 
@@ -95,6 +96,18 @@ class ContentView(GenericAPIView):
         serializer.is_valid(raise_exception=True)
         serializer.save()
         return success_response('content updated successfully')
+
+    def delete(self, request, content_id):
+        qs = self.get_queryset()
+        content = get_object_or_404(qs, id=content_id)
+        if content.price != ZERO and content.purchases.exists():
+            return error_response(
+                message='cannot delete a content that has already been purchased by at least one subscriber',
+                status_code=status.HTTP_403_FORBIDDEN,
+            )
+
+        content.delete()
+        return success_response('content delete successfully', status_code=status.HTTP_204_NO_CONTENT)
 
 
 class ContentListAPIView(ListAPIView):
