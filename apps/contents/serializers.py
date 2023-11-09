@@ -3,7 +3,6 @@ from decimal import Decimal
 from django.conf import settings
 from django.db import transaction
 from django.utils import timezone
-from django.db.models import Count
 
 from rest_framework import serializers
 
@@ -163,25 +162,6 @@ class LiveStreamSerializer(serializers.ModelSerializer):
         model = Livestream
         fields = ('id', 'creator', 'title', 'description', 'start', 'duration')
         read_only_fields = ('id', 'creator')
-
-
-class GroupedLiveStreamsSerializer(serializers.Serializer):
-    day = serializers.DateField()
-    livestreams = LiveStreamSerializer(many=True)
-
-    def to_representation(self, instance):
-        __import__('pdb').set_trace()
-        grouped_livestreams = instance.values('start__date').annotate(livestream_count=Count('id'))
-
-        # Serialize the grouped livestreams
-        serialized_data = []
-        for group in grouped_livestreams:
-            day = group['start__date']
-            livestreams_for_day = instance.filter(start__date=day)
-            serializer = LiveStreamSerializer(livestreams_for_day, many=True)
-            serialized_data.append({'day': day, 'livestreams': serializer.data})
-
-        return serialized_data
 
 
 class WithdrawalSerializer(serializers.Serializer):
