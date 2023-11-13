@@ -1,8 +1,10 @@
 from decimal import Decimal
 from typing import ClassVar
 
+from algosdk.constants import ADDRESS_LEN
+
 from django.db import models, transaction
-from django.core.validators import MaxLengthValidator, MinLengthValidator
+from django.core.validators import MinLengthValidator
 
 from apps.subscriptions.choices import SubscriptionType
 
@@ -18,25 +20,32 @@ class Creator(UUIDModel, TimestampedModel, models.Model):
         'address',
         unique=True,
         blank=False,
-        max_length=44,
-        validators=[MinLengthValidator(32), MaxLengthValidator(44)],
+        max_length=ADDRESS_LEN,
+        validators=[MinLengthValidator(ADDRESS_LEN)],
     )
     bio = models.CharField('bio', max_length=200, default='')
     image_url = models.URLField('image url', blank=False)
     banner_url = models.URLField('banner url', blank=False)
     social_links = models.JSONField('socials', default=dict)
 
-    # bonfida name service or user provider name(without .sol suffix)
+    # NFDomains name or user provider name(without .algo suffix)
     moniker = models.TextField('moniker', unique=True, blank=False)
 
     is_suspended = models.BooleanField('is suspended', blank=True, default=False)
     suspension_reason = models.TextField('suspension reason', default='')
 
+    spam_verification_tx = models.CharField(
+        'spam verification transaction id',
+        max_length=200,
+        blank=False,
+        unique=True,
+    )
+
     subscription_type = models.CharField(
         'subscription type',
         null=False,
         blank=False,
-        max_length=8,
+        max_length=13,
         choices=SubscriptionType.choices,
     )
 

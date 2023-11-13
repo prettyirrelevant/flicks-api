@@ -5,7 +5,7 @@ from django.db import transaction
 from rest_framework import serializers
 
 from .choices import SubscriptionType, SubscriptionStatus, SubscriptionDetailStatus
-from .models import NFTSubscription, FreeSubscription, SubscriptionDetail, MonetarySubscription
+from .models import FreeSubscription, SubscriptionDetail, MonetarySubscription, TokenGatedSubscription
 
 if TYPE_CHECKING:
     from apps.creators.models import Creator
@@ -15,19 +15,19 @@ class BaseSubscriptionSerializer(serializers.ModelSerializer):
     @staticmethod
     def handle_free_subscription(
         creator: 'Creator',
-        current_subscription: Union[FreeSubscription, MonetarySubscription, NFTSubscription],
+        current_subscription: Union[FreeSubscription, MonetarySubscription, TokenGatedSubscription],
     ) -> None: ...
 
     def get_current_subscription(
         self,
         subscription_type: SubscriptionType,
-    ) -> Union[FreeSubscription, NFTSubscription, MonetarySubscription]:
+    ) -> Union[FreeSubscription, TokenGatedSubscription, MonetarySubscription]:
         creator = self.context['request'].user
 
         if subscription_type == SubscriptionType.FREE:
             return FreeSubscription.objects.get(creator=creator)
-        if subscription_type == SubscriptionType.NFT:
-            return NFTSubscription.objects.get(creator=creator)
+        if subscription_type == SubscriptionType.TOKEN_GATED:
+            return TokenGatedSubscription.objects.get(creator=creator)
         if subscription_type == SubscriptionType.MONETARY:
             return MonetarySubscription.objects.get(creator=creator)
 
@@ -35,10 +35,10 @@ class BaseSubscriptionSerializer(serializers.ModelSerializer):
 
     @staticmethod
     def get_subscription_type_from_model(
-        model: Union[type[FreeSubscription], type[MonetarySubscription], type[NFTSubscription]],
+        model: Union[type[FreeSubscription], type[MonetarySubscription], type[TokenGatedSubscription]],
     ):
-        if model.__name__ == 'NFTSubscription':
-            return SubscriptionType.NFT
+        if model.__name__ == 'TokenGatedSubscription':
+            return SubscriptionType.TOKEN_GATED
         if model.__name__ == 'FreeSubscription':
             return SubscriptionType.FREE
         if model.__name__ == 'MonetarySubscription':
@@ -49,7 +49,7 @@ class BaseSubscriptionSerializer(serializers.ModelSerializer):
     @transaction.atomic()
     def create_subscription(
         self,
-        subscription_model: Union[type[FreeSubscription], type[MonetarySubscription], type[NFTSubscription]],
+        subscription_model: Union[type[FreeSubscription], type[MonetarySubscription], type[TokenGatedSubscription]],
         validated_data: dict[str, Any],
     ):
         creator = self.context['request'].user
@@ -80,10 +80,10 @@ class BaseSubscriptionSerializer(serializers.ModelSerializer):
 class DummySubscriptionSerializer(serializers.Serializer):
     """This is simply a serializer with all the necessary fields to create subscription for documentation purposes."""
 
-    collection_name = serializers.CharField(required=False)
-    collection_address = serializers.CharField(required=False)
-    collection_image_url = serializers.CharField(required=False)
-    collection_description = serializers.CharField(required=False)
+    token_id = serializers.CharField(required=False)
+    token_name = serializers.CharField(required=False)
+    token_decimals = serializers.IntegerField(required=False)
+    minimum_token_balance = serializers.DecimalField(required=False, decimal_places=2, max_digits=20)
     type = serializers.ChoiceField(  # noqa: A003
         choices=SubscriptionType,
         required=True,
@@ -111,7 +111,7 @@ class MonetarySubscriptionSerializer(BaseSubscriptionSerializer):
     @staticmethod
     def handle_free_subscription(
         creator: 'Creator',
-        current_subscription: Union[FreeSubscription, MonetarySubscription, NFTSubscription],
+        current_subscription: Union[FreeSubscription, MonetarySubscription, TokenGatedSubscription],
     ) -> None:
         SubscriptionDetail.objects.filter(creator=creator, subscription_id=current_subscription.id).update(
             status=SubscriptionDetailStatus.CANCELLED,
@@ -121,15 +121,43 @@ class MonetarySubscriptionSerializer(BaseSubscriptionSerializer):
         return self.create_subscription(MonetarySubscription, validated_data)
 
 
-class NFTSubscriptionSerializer(BaseSubscriptionSerializer):
+# class NFTSubscriptionSerializer(BaseSubscriptionSerializer):
+#     class Meta:
+#         model = NFTSubscription
+#         fields = (
+#             'id',
+#             'collection_name',
+#             'collection_image_url',
+#             'collection_description',
+#             'collection_address',
+#             'status',
+#             'created_at',
+#             'updated_at',
+#         )
+#         read_only_fields = ('id', 'created_at', 'updated_at')
+#
+#     @staticmethod
+#     def handle_free_subscription(
+#         creator: 'Creator',
+#         current_subscription: Union[FreeSubscription, MonetarySubscription, NFTSubscription],
+#     ) -> None:
+#         SubscriptionDetail.objects.filter(creator=creator, subscription_id=current_subscription.id).update(
+#             status=SubscriptionDetailStatus.CANCELLED,
+#         )
+#
+#     def create(self, validated_data):
+#         return self.create_subscription(NFTSubscription, validated_data)
+
+
+class TokenGatedSubscriptionSerializer(BaseSubscriptionSerializer):
     class Meta:
-        model = NFTSubscription
+        model = TokenGatedSubscription
         fields = (
             'id',
-            'collection_name',
-            'collection_image_url',
-            'collection_description',
-            'collection_address',
+            'token_name',
+            'token_decimals',
+            'token_id',
+            'minimum_token_balance',
             'status',
             'created_at',
             'updated_at',
@@ -139,11 +167,11 @@ class NFTSubscriptionSerializer(BaseSubscriptionSerializer):
     @staticmethod
     def handle_free_subscription(
         creator: 'Creator',
-        current_subscription: Union[FreeSubscription, MonetarySubscription, NFTSubscription],
+        current_subscription: Union[FreeSubscription, MonetarySubscription, TokenGatedSubscription],
     ) -> None:
         SubscriptionDetail.objects.filter(creator=creator, subscription_id=current_subscription.id).update(
             status=SubscriptionDetailStatus.CANCELLED,
         )
 
     def create(self, validated_data):
-        return self.create_subscription(NFTSubscription, validated_data)
+        return self.create_subscription(TokenGatedSubscription, validated_data)

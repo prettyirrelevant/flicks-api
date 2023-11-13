@@ -1,7 +1,8 @@
 import logging
 from unittest.mock import patch
 
-from solders.keypair import Keypair
+from algosdk.account import generate_account
+from rest_framework_simplejwt.tokens import RefreshToken
 
 from django.test import TestCase
 
@@ -15,10 +16,8 @@ from apps.creators.tests import WALLET_CREATION_RESPONSE
 class TransactionsTest(TestCase):
     def setUp(self):
         self.client = APIClient()
-        self.keypair, self.creator = self.create_creator('bonfida.sol')  # pylint: disable=no-value-for-parameter
-        self.message = b'Message: Welcome to Flicks!\nURI: https://flicks.vercel.app'
-        self.signature = self.keypair.sign_message(message=self.message)
-        self.auth_header = {'Authorization': f'Signature {self.keypair.pubkey()}:{self.signature}'}
+        self.creator = self.create_creator('nfdomains.algo')  # pylint: disable=no-value-for-parameter
+        self.auth_header = {'Authorization': f'Bearer {RefreshToken.for_user(self.creator).access_token}'}
 
         logging.disable(logging.CRITICAL)
 
@@ -28,17 +27,16 @@ class TransactionsTest(TestCase):
         return_value=WALLET_CREATION_RESPONSE,
     )
     def create_creator(moniker: str, mock_post):  # noqa: ARG004
-        keypair = Keypair()
-        creator = Creator.objects.create(
+        _, address = generate_account()
+        return Creator.objects.create(
+            address=address,
             moniker=moniker,
+            is_verified=True,
             image_url='https://google.com',
             banner_url='https://google.com',
-            address=str(keypair.pubkey()),
             subscription_type=SubscriptionType.FREE,
-            is_verified=True,
+            spam_verification_tx='VA37N6HU3QBSR7KL4BZIIM464NXRH3FWY7LH7PHLF6W5NHOCPXA',
         )
-
-        return keypair, creator
 
     @patch(
         target='services.circle.CircleAPI._request',

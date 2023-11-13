@@ -1,8 +1,12 @@
 import json
+import base64
+import random
+import string
 import logging
 from unittest.mock import patch
 
-from solders.keypair import Keypair
+from algosdk.account import generate_account
+from rest_framework_simplejwt.tokens import RefreshToken
 
 from django.test import TestCase
 
@@ -55,10 +59,8 @@ WALLET_CREATION_RESPONSE_2 = json.loads(
 class AccountTest(TestCase):
     def setUp(self):
         self.client = APIClient()
-        (
-            self.keypair,
-            self.creator,
-        ) = self.create_creator()  # pylint: disable=no-value-for-parameter
+        self.creator = self.create_creator('nfdomains.algo')  # pylint: disable=no-value-for-parameter
+        self.auth_header = {'Authorization': f'Bearer {RefreshToken.for_user(self.creator).access_token}'}
 
         logging.disable(logging.CRITICAL)
 
@@ -70,21 +72,20 @@ class AccountTest(TestCase):
         target='services.circle.CircleAPI._request',
         return_value=WALLET_CREATION_RESPONSE,
     )
-    def create_creator(mock_post):  # noqa: ARG004
-        keypair = Keypair()
-        creator = Creator.objects.create(
-            moniker='bonfida.sol',
+    def create_creator(moniker: str, mock_post):  # noqa: ARG004
+        _, address = generate_account()
+        return Creator.objects.create(
+            address=address,
+            moniker=moniker,
+            is_verified=True,
             image_url='https://google.com',
             banner_url='https://google.com',
-            address=str(keypair.pubkey()),
             subscription_type=SubscriptionType.FREE,
-            is_verified=True,
+            spam_verification_tx='VA37N6HU3QBSR7KL4BZIIM464NXRH3FWY7LH7PHLF6W5NHOCPXA',
         )
 
-        return keypair, creator
-
     def test_get_profile_without_credentials(self):
-        response = self.client.get(f'/creators/{self.keypair.pubkey()}')
+        response = self.client.get(f'/creators/{self.creator.address}')
         self.assertEqual(response.status_code, 200)
 
     @patch(
@@ -92,10 +93,9 @@ class AccountTest(TestCase):
         return_value=WALLET_CREATION_RESPONSE,
     )
     def test_get_profile_with_valid_credentials(self, mock_post):
-        signature = self.keypair.sign_message(b'Message: Welcome to Flicks!\nURI: https://flicks.vercel.app')
         response = self.client.get(
-            path=f'/creators/{self.keypair.pubkey()}',
-            headers={'Authorization': f'Signature {self.keypair.pubkey()}:{signature}'},
+            path=f'/creators/{self.creator.address}',
+            headers=self.auth_header,
         )
         response.json()['data'].pop('created_at')
         response.json()['data'].pop('updated_at')
@@ -113,54 +113,45 @@ class AccountTest(TestCase):
                 'subscribers_count': 0,
                 'subscription_info': {},
                 'suspension_reason': '',
-                'moniker': 'bonfida.sol',
+                'moniker': 'nfdomains.algo',
                 'subscription_type': 'free',
                 'image_url': 'https://google.com',
                 'banner_url': 'https://google.com',
-                'address': str(self.keypair.pubkey()),
+                'address': self.creator.address,
             },
             second=response.json()['data'],
         )
 
     def test_get_profile_with_invalid_credentials_signature_message(self):
-        signature = self.keypair.sign_message(b'Message: Welcome to John Doe!\nURI: https://flicks.vercel.app')
+        def generate_random_jwt():
+            return '.'.join(
+                [
+                    base64.urlsafe_b64encode(json.dumps({'alg': 'HS256', 'typ': 'JWT'}).encode()).decode().rstrip('='),
+                    base64.urlsafe_b64encode(
+                        json.dumps(
+                            {'data': ''.join(random.choices(string.ascii_letters + string.digits, k=10))}  # noqa: S311
+                        ).encode()
+                    )
+                    .decode()
+                    .rstrip('='),
+                    ''.join(random.choices(string.ascii_letters + string.digits, k=43)),  # noqa: S311
+                ]
+            )
+
         response = self.client.get(
             path='/creators/me',
-            headers={'Authorization': f'Signature {self.keypair.pubkey()}:{signature}'},
+            headers={'Authorization': f'Bearer {generate_random_jwt()}'},
         )
         self.assertContains(
             response,
-            'Signature provided is not valid for the address.',
+            'Given token not valid for any token type',
             status_code=401,
         )
-        self.assertContains(response, 'AuthenticationFailed', status_code=401)
-
-    def test_get_profile_with_invalid_credentials_signature(self):
-        signature = self.keypair.sign_message(b'Message: Welcome to Flicks!\nURI: https://flicks.vercel.app')
-        response = self.client.get(
-            path='/creators/me',
-            headers={'Authorization': f'Signature {self.keypair.pubkey()}:{signature}rr'},
-        )
-        self.assertContains(response, 'string decoded to wrong size for signature', status_code=401)
-        self.assertContains(response, 'AuthenticationFailed', status_code=401)
-
-    def test_get_profile_with_invalid_credentials_addr(self):
-        signature = self.keypair.sign_message(b'Message: Welcome to Flicks!\nURI: https://flicks.vercel.app')
-        response = self.client.get(
-            path='/creators/me',
-            headers={'Authorization': f'Signature {self.keypair.pubkey()}4f:{signature}'},
-        )
-        self.assertContains(response, 'String is the wrong size', status_code=401)
-        self.assertContains(response, 'AuthenticationFailed', status_code=401)
 
     @patch(
         target='services.circle.CircleAPI._request',
         return_value=WALLET_CREATION_RESPONSE,
     )
     def test_get_suggested_creators(self, mock_post):
-        signature = self.keypair.sign_message(b'Message: Welcome to Flicks!\nURI: https://flicks.vercel.app')
-        response = self.client.get(
-            path='/creators/suggestions',
-            headers={'Authorization': f'Signature {self.keypair.pubkey()}:{signature}'},
-        )
+        response = self.client.get(path='/creators/suggestions', headers=self.auth_header)
         self.assertEqual(response.status_code, 200)

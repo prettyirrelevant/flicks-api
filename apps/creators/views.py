@@ -2,6 +2,7 @@ from typing import ClassVar
 
 from drf_yasg import openapi
 from drf_yasg.utils import swagger_auto_schema
+from rest_framework_simplejwt.tokens import RefreshToken
 
 from django.db.models import Q
 from django.conf import settings
@@ -24,7 +25,12 @@ from .models import Creator
 from .choices import Blockchain
 from .exceptions import BadGatewayError
 from .permissions import IsAuthenticated
-from .serializers import CreatorSerializer, MinimalCreatorSerializer, CreatorCreationSerializer
+from .serializers import (
+    CreatorSerializer,
+    MinimalCreatorSerializer,
+    CreatorCreationSerializer,
+    CreatorAuthenticationSerializer,
+)
 
 
 class CreatorCreationAPIView(GenericAPIView):
@@ -43,6 +49,27 @@ class CreatorCreationAPIView(GenericAPIView):
         return success_response('Creator created successfully.', status_code=status.HTTP_201_CREATED)
 
 
+class CreatorAuthenticationAPIView(GenericAPIView):
+    queryset = Creator.objects.get_queryset()
+    serializer_class = CreatorAuthenticationSerializer
+
+    def post(self, request, *args, **kwargs):
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+        try:
+            creator = self.get_queryset().get(address=serializer.validated_data['address'])
+        except Creator.DoesNotExist:
+            return error_response(
+                errors=[],
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                message='Please provide a valid & registered creator address',
+            )
+
+        refresh = RefreshToken.for_user(creator)
+        return success_response({'access_token': str(refresh.access_token), 'refresh_token': str(refresh)})
+
+
 class CreatorAPIView(RetrieveAPIView):
     lookup_field = 'address'
     serializer_class = CreatorSerializer
@@ -51,7 +78,7 @@ class CreatorAPIView(RetrieveAPIView):
         'wallet__deposit_addresses',
         'contents',
         'subscribers',
-        'nft_subscriptions',
+        'token_gated_subscriptions',
         'monetary_subscriptions',
     )
 
@@ -137,7 +164,7 @@ class CreatorWithdrawalAPIView(GenericAPIView):
             circle_api = CircleAPI(api_key=settings.CIRCLE_API_KEY, base_url=settings.CIRCLE_API_BASE_URL)
 
             withdrawal_response = circle_api.make_withdrawal(
-                chain=Blockchain.SOLANA.value,
+                chain=Blockchain.ALGORAND.value,
                 amount=PERCENTAGE_CUT_FROM_WITHDRAWALS * amount,
                 destination_address=self.request.user.address,
                 master_wallet_id=settings.CIRCLE_MASTER_WALLET_ID,

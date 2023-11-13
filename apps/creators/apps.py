@@ -6,4 +6,4 @@ class CreatorsConfig(AppConfig):
     name = 'apps.creators'
 
     def ready(self):
-        import apps.creators.signals  # noqa: F401
+        import apps.creators.signals  # noqa: F401 PLC0415
