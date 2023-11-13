@@ -160,8 +160,8 @@ class CreatorCreationSerializer(serializers.Serializer):
         attrs['is_verified'] = response is not None and 'twitter' in response['verified']
         attrs['social_links'] = {} if response is None else {**response['userDefined'], **response['verified']}
 
-        attrs['social_links'].pop('caalgo')
-        attrs['social_links'].pop('caAlgo')
+        attrs['social_links'].pop('caalgo', None)
+        attrs['social_links'].pop('caAlgo', None)
         return attrs
 
 
