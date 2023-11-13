@@ -1,3 +1,5 @@
+from rest_framework_simplejwt.views import TokenRefreshView
+
 from django.urls import path
 
 from .views import (
@@ -7,10 +9,13 @@ from .views import (
     SuggestedCreatorAPIView,
     CreatorWithdrawalAPIView,
     MonikerAvailabilityAPIView,
+    CreatorAuthenticationAPIView,
 )
 
 urlpatterns = [
     path('', CreatorCreationAPIView.as_view(), name='create-creator'),
+    path('auth/refresh', TokenRefreshView.as_view(), name='refresh-token'),
+    path('auth', CreatorAuthenticationAPIView.as_view(), name='authenticate-creator'),
     path('search', SearchCreatorsAPIView.as_view(), name='search-creators'),
     path('suggestions', SuggestedCreatorAPIView.as_view(), name='suggested-creators'),
     path(

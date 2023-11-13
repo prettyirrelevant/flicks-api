@@ -9,8 +9,10 @@ https://docs.djangoproject.com/en/4.2/topics/settings/
 For the full list of settings and their values, see
 https://docs.djangoproject.com/en/4.2/ref/settings/
 """
+
 from typing import Any
 from pathlib import Path
+from datetime import timedelta
 
 from environ import Env
 from huey import RedisHuey
@@ -150,6 +152,8 @@ USE_TZ = True
 # ==============================================================================
 STATIC_URL = 'static/'
 
+STATICFILES_DIRS = [BASE_DIR / 'static']
+
 STATIC_ROOT = BASE_DIR / 'staticfiles'
 
 
@@ -175,7 +179,7 @@ X_FRAME_OPTIONS = 'DENY'
 REST_FRAMEWORK: dict[str, Any] = {
     'DEFAULT_PERMISSION_CLASSES': ['rest_framework.permissions.AllowAny'],
     'DEFAULT_RENDERER_CLASSES': ['rest_framework.renderers.JSONRenderer'],
-    'DEFAULT_AUTHENTICATION_CLASSES': ['apps.creators.authentication.Web3Authentication'],
+    'DEFAULT_AUTHENTICATION_CLASSES': ['apps.creators.authentication.CustomJWTAuthentication'],
     'EXCEPTION_HANDLER': 'utils.views.custom_exception_handler',
 }
 if DEBUG:
@@ -260,6 +264,26 @@ AGORA_APP_CERTIFICATE = env.str('AGORA_APP_CERTIFICATE')
 # SHARINGAN SETTINGS
 # =======================================
 SHARINGAN_BASE_URL = env.str('SHARINGAN_BASE_URL')
+
+
+# =======================================
+# ALGORAND SETTINGS
+# =======================================
+PURESTAKE_API_KEY = env.str('PURESTAKE_API_KEY')
+PURESTAKE_ALGOD_URL = env.str('PURESTAKE_ALGOD_URL')
+PURESTAKE_INDEXER_URL = env.str('PURESTAKE_INDEXER_URL')
+BURN_ADDRESS = 'FRWQZO4A6NZKANEYYWAHZIBHJ46T2LVRFACCLHUY3JQAJLUIWNQQLOQ26A'
+
+
+# =======================================
+# REST FRAMEWORK SIMPLEJWT SETTINGS
+# =======================================
+SIMPLE_JWT = {
+    'USER_ID_FIELD': 'address',
+    'USER_ID_CLAIM': 'creator_id',
+    'REFRESH_TOKEN_LIFETIME': timedelta(hours=12),
+    'ACCESS_TOKEN_LIFETIME': timedelta(minutes=30),
+}
 
 
 # ==============================================================================

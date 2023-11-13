@@ -1,32 +1,34 @@
-from solders.pubkey import Pubkey
-from solders.signature import Signature
+from rest_framework_simplejwt.settings import api_settings
+from rest_framework_simplejwt.exceptions import InvalidToken
+from rest_framework_simplejwt.authentication import JWTAuthentication
 
 from rest_framework.exceptions import AuthenticationFailed
-from rest_framework.authentication import TokenAuthentication
 
 from .models import Creator
 
 
-class Web3Authentication(TokenAuthentication):
-    keyword = 'Signature'
+class CustomJWTAuthentication(JWTAuthentication):
+    def __init__(self, *args, **kwargs) -> None:
+        super().__init__(*args, **kwargs)
+        self.creator_model = Creator
 
-    def authenticate_credentials(self, key):
+    def get_user(self, validated_token):
         try:
-            addr, sig = key.split(':')
-            public_key = Pubkey.from_string(addr)
-            if not public_key.is_on_curve():
-                raise AuthenticationFailed(detail='Invalid address provided in signature.')
+            creator_id = validated_token[api_settings.USER_ID_CLAIM]
+        except KeyError as e:
+            raise InvalidToken('Token contained no recognizable creator identification') from e
 
-            msg = 'Message: Welcome to Flicks!\nURI: https://flicks.vercel.app'
-            signature = Signature.from_string(sig)
-            if not signature.verify(public_key, msg.encode()):
-                raise AuthenticationFailed('Signature provided is not valid for the address.')
+        try:
+            creator = self.creator_model.objects.get(**{api_settings.USER_ID_FIELD: creator_id})
+        except self.creator_model.DoesNotExist as e:
+            raise AuthenticationFailed('Creator not found') from e
 
-            account = Creator.objects.get(address=str(public_key))
-        except Exception as e:  # noqa: BLE001
-            if isinstance(e, AuthenticationFailed):
-                raise
+        return creator
 
-            raise AuthenticationFailed(str(e)) from e
+    def authenticate(self, request):
+        response = super().authenticate(request)
+        if response is None:
+            return response
 
-        return account, None
+        creator, validated_token = response
+        return creator, validated_token

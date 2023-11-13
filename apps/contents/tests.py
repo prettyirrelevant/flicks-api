@@ -1,11 +1,14 @@
 import json
 import uuid
+import random
+import string
 import logging
 import datetime
 from decimal import Decimal
 from unittest.mock import patch
 
-from solders.keypair import Keypair
+from algosdk.account import generate_account
+from rest_framework_simplejwt.tokens import RefreshToken
 
 from django.test import TestCase
 from django.utils import timezone
@@ -23,10 +26,8 @@ from .models import Content, Livestream
 class ContentsTest(TestCase):
     def setUp(self):
         self.client = APIClient()
-        self.keypair, self.creator = self.create_creator('bonfida.sol')  # pylint: disable=no-value-for-parameter
-        self.message = b'Message: Welcome to Flicks!\nURI: https://flicks.vercel.app'
-        self.signature = self.keypair.sign_message(message=self.message)
-        self.auth_header = {'Authorization': f'Signature {self.keypair.pubkey()}:{self.signature}'}
+        self.creator = self.create_creator('nfdomains.algo')  # pylint: disable=no-value-for-parameter
+        self.auth_header = {'Authorization': f'Bearer {RefreshToken.for_user(self.creator).access_token}'}
 
         logging.disable(logging.CRITICAL)
 
@@ -36,17 +37,17 @@ class ContentsTest(TestCase):
         return_value=WALLET_CREATION_RESPONSE,
     )
     def create_creator(moniker: str, mock_post):  # noqa: ARG004
-        keypair = Keypair()
-        creator = Creator.objects.create(
+        _, address = generate_account()
+        tx_hash_generator = lambda: ''.join(random.choices(string.ascii_uppercase + string.digits, k=52))  # noqa: E731 S311
+        return Creator.objects.create(
+            address=address,
             moniker=moniker,
+            is_verified=True,
             image_url='https://google.com',
             banner_url='https://google.com',
-            address=str(keypair.pubkey()),
             subscription_type=SubscriptionType.FREE,
-            is_verified=True,
+            spam_verification_tx=tx_hash_generator(),
         )
-
-        return keypair, creator
 
     def test_generate_presigned_url_without_credentials(self):
         response = self.client.post('/contents/get-upload-urls')
@@ -146,7 +147,7 @@ class ContentsTest(TestCase):
             content_type='application/json',
         )
         self.assertEqual(response.status_code, 201)
-        content = Content.objects.get(creator__address=self.keypair.pubkey())
+        content = Content.objects.get(creator__address=self.creator.address)
         self.assertEqual(content.caption, data['caption'])
         self.assertEqual(str(content.price), '0.00')
         self.assertEqual(content.content_type, 'free')
@@ -178,7 +179,7 @@ class ContentsTest(TestCase):
         )
         self.assertEqual(response.status_code, 201)
 
-        content = Content.objects.get(creator__address=self.keypair.pubkey(), price__gte=Decimal('1'))
+        content = Content.objects.get(creator__address=self.creator.address, price__gte=Decimal('1'))
         self.assertEqual(content.caption, data['caption'])
         self.assertEqual(str(content.price), '1.00')
         self.assertEqual(content.content_type, 'paid')
@@ -201,7 +202,7 @@ class ContentsTest(TestCase):
         self.assertEqual(response.status_code, 404)
 
         # Fetch my Content View
-        response = self.client.get(path=f'/contents/creators/{self.keypair.pubkey()}', headers=self.auth_header)
+        response = self.client.get(path=f'/contents/creators/{self.creator.address}', headers=self.auth_header)
         self.assertEqual(response.status_code, 200)
         self.assertEqual(len(response.json()['data']['results']), 2)
 
@@ -224,7 +225,7 @@ class ContentsTest(TestCase):
             content_type='application/json',
         )
         self.assertEqual(response.status_code, 201)
-        livestream = Livestream.objects.get(creator__address=self.keypair.pubkey())
+        livestream = Livestream.objects.get(creator__address=self.creator.address)
         self.assertEqual(livestream.title, data['title'])
         self.assertEqual(livestream.description, data['description'])
         self.assertEqual(livestream.start.strftime('%Y-%m-%d %H:%M:%S'), data['start'])
@@ -245,7 +246,7 @@ class ContentsTest(TestCase):
         )
         self.assertEqual(response.status_code, 201)
         instant_livestream = Livestream.objects.get(
-            creator__address=self.keypair.pubkey(),
+            creator__address=self.creator.address,
             title=instant_data['title'],
         )
         self.assertEqual(instant_livestream.title, instant_data['title'])
@@ -291,7 +292,7 @@ class ContentsTest(TestCase):
         # Join Livestream Test
         response = self.client.get(path=f'/contents/livestreams/{livestream.id}/join', headers=self.auth_header)
         self.assertEqual(response.status_code, 200)
-        self.assertEqual(response.json()['data']['user_account'], str(self.keypair.pubkey()))
+        self.assertEqual(response.json()['data']['user_account'], str(self.creator.address))
         self.assertEqual(response.json()['data']['channel_name'], str(livestream.id))
         self.assertIn('token', response.json()['data'])
 
@@ -333,13 +334,14 @@ class ContentsTest(TestCase):
         )
 
         # Create Subscriber
-        keypair = Keypair()
+        _, address = generate_account()
         user = Creator.objects.create(
-            moniker='bonfida2.sol',
+            moniker='nfdomains2.algo',
             image_url='https://google.com',
             banner_url='https://google.com',
-            address=str(keypair.pubkey()),
+            address=address,
             subscription_type=SubscriptionType.FREE,
+            spam_verification_tx='DDDFFFF',
             is_verified=True,
         )
         free_subscription = FreeSubscription.objects.get(creator=self.creator)
@@ -350,8 +352,7 @@ class ContentsTest(TestCase):
             status=SubscriptionDetailStatus.ACTIVE,
             expires_at=timezone.now() + datetime.timedelta(days=1),
         )
-        signature = keypair.sign_message(message=self.message)
-        auth_header = {'Authorization': f'Signature {keypair.pubkey()}:{signature}'}
+        auth_header = {'Authorization': f'Bearer {RefreshToken.for_user(user).access_token}'}
         response = self.client.get(
             path='/contents/timeline',
             headers=auth_header,
@@ -393,14 +394,16 @@ class ContentsTest(TestCase):
         data['price'] = '1'
         data['content_type'] = 'paid'
         data['caption'] = 'My First Paid Content'
+
         # Create User
-        keypair = Keypair()
-        Creator.objects.create(
-            moniker='bonfida2.sol',
+        _, address = generate_account()
+        user = Creator.objects.create(
+            moniker='bonfida2.algo',
             image_url='https://google.com',
             banner_url='https://google.com',
-            address=str(keypair.pubkey()),
+            address=address,
             subscription_type=SubscriptionType.FREE,
+            spam_verification_tx='XDDFFF',
             is_verified=True,
         )
         self.client.post(
@@ -409,10 +412,9 @@ class ContentsTest(TestCase):
             headers=self.auth_header,
             content_type='application/json',
         )
-        signature = keypair.sign_message(message=self.message)
-        auth_header = {'Authorization': f'Signature {keypair.pubkey()}:{signature}'}
+        auth_header = {'Authorization': f'Bearer {RefreshToken.for_user(user).access_token}'}
         creator_media_response = self.client.get(
-            path=f'/contents/media/{self.keypair.pubkey()}',
+            path=f'/contents/media/{self.creator.address}',
             headers=auth_header,
             content_type='application/json',
         )

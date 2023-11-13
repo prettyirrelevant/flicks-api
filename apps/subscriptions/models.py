@@ -21,22 +21,40 @@ class FreeSubscription(UUIDModel, TimestampedModel, models.Model):
     status = models.CharField('status', max_length=10, choices=SubscriptionStatus.choices, blank=False)
 
 
-class NFTSubscription(UUIDModel, TimestampedModel, models.Model):
+class TokenGatedSubscription(UUIDModel, TimestampedModel, models.Model):
     creator = models.ForeignKey(
         to='creators.Creator',
-        related_name='nft_subscriptions',
+        related_name='token_gated_subscriptions',
         verbose_name='creator',
         on_delete=models.SET_NULL,
         blank=True,
         null=True,
     )
 
-    collection_name = models.TextField('collection name', blank=False)
-    collection_image_url = models.TextField('collection image url', blank=False)
-    collection_description = models.TextField('collection description', blank=False)
-    collection_address = models.CharField('collection address', max_length=44, blank=False)
+    token_name = models.TextField('token name', blank=False)
+    token_decimals = models.IntegerField('token decimals', blank=False)
+    token_id = models.CharField('token identifier', max_length=100, blank=False)
+    minimum_token_balance = models.DecimalField('minimum token balance', blank=False, max_digits=20, decimal_places=2)
 
     status = models.CharField('status', max_length=10, choices=SubscriptionStatus.choices, blank=False)
+
+
+# class NFTSubscription(UUIDModel, TimestampedModel, models.Model):
+#     creator = models.ForeignKey(
+#         to='creators.Creator',
+#         related_name='nft_subscriptions',
+#         verbose_name='creator',
+#         on_delete=models.SET_NULL,
+#         blank=True,
+#         null=True,
+#     )
+#
+#     collection_name = models.TextField('collection name', blank=False)
+#     collection_image_url = models.TextField('collection image url', blank=False)
+#     collection_description = models.TextField('collection description', blank=False)
+#     collection_address = models.CharField('collection address', max_length=44, blank=False)
+#
+#     status = models.CharField('status', max_length=10, choices=SubscriptionStatus.choices, blank=False)
 
 
 class MonetarySubscription(UUIDModel, TimestampedModel, models.Model):
@@ -62,7 +80,12 @@ class SubscriptionDetail(UUIDModel, TimestampedModel, models.Model):
     --> If renewal happens while subscription is active, a month is added to `expires_at`.
         Otherwise, add a month to the current datetime.
 
-    NFT subscriptions are issued a daily subscription detail.
+    # NFT subscriptions are issued a daily subscription detail.
+    # --> A background job checks 15 minutes to expiry and tries to renew the subscription.
+    # --> If renewal happens while subscription is active, a day is added to `expires_at`.
+    #     Otherwise, add a day to the current datetime.
+
+    Token gated subscriptions are issued a daily subscription detail.
     --> A background job checks 15 minutes to expiry and tries to renew the subscription.
     --> If renewal happens while subscription is active, a day is added to `expires_at`.
         Otherwise, add a day to the current datetime.

@@ -6,4 +6,4 @@ class ContentsConfig(AppConfig):
     name = 'apps.contents'
 
     def ready(self):
-        import apps.contents.signals  # noqa: F401
+        import apps.contents.signals  # noqa: F401 PLC0415
