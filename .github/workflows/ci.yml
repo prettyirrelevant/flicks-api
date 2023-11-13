@@ -27,7 +27,7 @@ env:
   PURESTAKE_API_KEY: ${{ secrets.PURESTAKE_API_KEY }}
   PURESTAKE_ALGOD_URL: ${{ secrets.PURESTAKE_ALGOD_URL }}
   PURESTAKE_INDEXER_URL: ${{ secrets.PURESTAKE_INDEXER_URL }}
-
+  NFDOMAINS_BASE_URL: ${{ secrets.NFDOMAINS_BASE_URL }}
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.head_ref || github.ref }}

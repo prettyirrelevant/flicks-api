@@ -4,6 +4,7 @@ from collections import defaultdict
 
 from django.conf import settings
 from django.db import transaction
+from django.db.models import F, Q
 from django.utils import timezone
 
 from rest_framework import status
@@ -381,7 +382,7 @@ class DeleteCommentAPIView(APIView):
         return obj
 
 
-class TimelineView(ListAPIView):
+class ContentTimelineView(ListAPIView):
     serializer_class = ContentSerializer
     permission_classes = (IsAuthenticated,)
     pagination_class = CustomCursorPagination
@@ -392,6 +393,43 @@ class TimelineView(ListAPIView):
                 'creator',
             ),
         ).order_by('-created_at')
+
+
+class LiveStreamTimelineView(ListAPIView):
+    serializer_class = LiveStreamSerializer
+    permission_classes = (IsAuthenticated,)
+    pagination_class = CustomCursorPagination
+
+    def get_queryset(self):
+        now = timezone.now()
+        return (
+            Livestream.objects.filter(Q(start__isnull=True) & Q(created_at__gte=now - F('duration')))
+            .filter(
+                creator__in=self.request.user.subscriptions.filter(status=SubscriptionDetailStatus.ACTIVE).values(
+                    'creator',
+                ),
+            )
+            .order_by('-created_at')
+        )
+
+    def get(self, request, *args, **kwargs):
+        queryset = self.filter_queryset(self.get_queryset())
+        page = self.paginate_queryset(queryset)
+        if page is not None:
+            data = self.group_livestreams(page)
+            return self.get_paginated_response(data)
+
+        data = self.group_livestreams(page)
+        return success_response(data)
+
+    def group_livestreams(self, results):
+        grouped_data = defaultdict(lambda: defaultdict(list))
+        for key, group in itertools.groupby(results, lambda x: x.created_at.date()):
+            for entry in group:
+                livestream_type = 'ongoing' if entry.start is None else 'upcoming'
+                grouped_data[livestream_type][key.isoformat()].append(self.get_serializer(instance=entry).data)
+
+        return grouped_data
 
 
 class MediaView(ListAPIView):

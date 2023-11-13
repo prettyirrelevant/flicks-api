@@ -237,7 +237,6 @@ class ContentsTest(TestCase):
         # Create Instant Livestream
         instant_data = {
             'title': 'My Instant Livestream',
-            'start': None,
             'description': 'I just opened a Flicks Account. Join me for my first Instant Livestream.',
             'duration': datetime.timedelta(minutes=15).seconds,
         }

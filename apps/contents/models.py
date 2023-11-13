@@ -75,7 +75,7 @@ class Livestream(UUIDModel, TimestampedModel, models.Model):
     )
     title = models.CharField(max_length=50, blank=False, verbose_name='title')
     description = models.TextField(verbose_name='description')
-    start = models.DateTimeField(verbose_name='start timestamp')
+    start = models.DateTimeField(verbose_name='start timestamp', null=True)
     duration = models.DurationField(
         verbose_name='livestream duration',
         validators=[

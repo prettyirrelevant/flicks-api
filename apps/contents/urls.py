@@ -5,14 +5,15 @@ from .views import (
     ContentView,
     DiscoverView,
     LikesAPIView,
-    TimelineView,
     LivestreamView,
     PreSignedURLView,
     ContentListAPIView,
     JoinLivestreamView,
+    ContentTimelineView,
     CreateCommentAPIVIew,
     DeleteCommentAPIView,
     PayForContentAPIView,
+    LiveStreamTimelineView,
     FetchUpdateDeleteLivestreamView,
 )
 
@@ -21,6 +22,7 @@ urlpatterns = [
     path('discover', DiscoverView.as_view(), name='discover-view'),
     path('get-upload-urls', PreSignedURLView.as_view(), name='presigned-urls'),
     path('livestreams', LivestreamView.as_view(), name='livestream-view'),
+    path('livestreams/timeline', LiveStreamTimelineView.as_view(), name='livestream-timeline-view'),
     path(
         'livestreams/<uuid:stream_id>/join',
         JoinLivestreamView.as_view(),
@@ -31,7 +33,7 @@ urlpatterns = [
         FetchUpdateDeleteLivestreamView.as_view(),
         name='fetch-update-delete-livestream-view',
     ),
-    path('timeline', TimelineView.as_view(), name='timeline-view'),
+    path('timeline', ContentTimelineView.as_view(), name='content-timeline-view'),
     path('media/<str:address>', MediaView.as_view(), name='media-view'),
     path('creators/<str:address>', ContentListAPIView.as_view(), name='creators-content'),
     path('<uuid:content_id>/pay', PayForContentAPIView.as_view(), name='pay-for-content'),

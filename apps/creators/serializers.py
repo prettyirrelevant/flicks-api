@@ -147,7 +147,7 @@ class CreatorCreationSerializer(serializers.Serializer):
         ):
             raise serializers.ValidationError('Invalid transaction ID provided')
 
-        nf_domains = NFDomains(settings.SHARINGAN_BASE_URL)
+        nf_domains = NFDomains(settings.NFDOMAINS_BASE_URL)
         response = nf_domains.resolve_address(attrs['address'])
         if response is None and attrs['moniker'].endswith('.algo'):
             raise serializers.ValidationError('You cannot use an NFDomain name as a moniker if you do not own it.')
