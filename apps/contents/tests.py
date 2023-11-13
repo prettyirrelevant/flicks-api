@@ -38,7 +38,10 @@ class ContentsTest(TestCase):
     )
     def create_creator(moniker: str, mock_post):  # noqa: ARG004
         _, address = generate_account()
-        tx_hash_generator = lambda: ''.join(random.choices(string.ascii_uppercase + string.digits, k=52))  # noqa: E731 S311
+
+        def tx_hash_generator():
+            return ''.join(random.choices(string.ascii_uppercase + string.digits, k=52))  # noqa: S311
+
         return Creator.objects.create(
             address=address,
             moniker=moniker,
