@@ -1,8 +1,10 @@
 from decimal import Decimal
 from typing import ClassVar
 
+from algosdk.constants import ADDRESS_LEN
+
 from django.db import models, transaction
-from django.core.validators import MaxLengthValidator, MinLengthValidator
+from django.core.validators import MinLengthValidator
 
 from apps.subscriptions.choices import SubscriptionType
 
@@ -18,8 +20,8 @@ class Creator(UUIDModel, TimestampedModel, models.Model):
         'address',
         unique=True,
         blank=False,
-        max_length=44,
-        validators=[MinLengthValidator(32), MaxLengthValidator(44)],
+        max_length=ADDRESS_LEN,
+        validators=[MinLengthValidator(ADDRESS_LEN)],
     )
     bio = models.CharField('bio', max_length=200, default='')
     image_url = models.URLField('image url', blank=False)

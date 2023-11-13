@@ -2,6 +2,7 @@
 
 from decimal import Decimal
 import django.core.validators
+from algosdk.constants import ADDRESS_LEN
 from django.db import migrations, models
 import django.db.models.deletion
 import uuid
@@ -41,11 +42,10 @@ class Migration(migrations.Migration):
                 (
                     "address",
                     models.CharField(
-                        max_length=44,
+                        max_length=ADDRESS_LEN,
                         unique=True,
                         validators=[
-                            django.core.validators.MinLengthValidator(32),
-                            django.core.validators.MaxLengthValidator(44),
+                            django.core.validators.MinLengthValidator(ADDRESS_LEN),
                         ],
                         verbose_name="address",
                     ),
