@@ -16,6 +16,7 @@ from apps.transactions.models import Transaction
 from apps.contents.serializers import WithdrawalSerializer
 
 from services.circle import CircleAPI
+from services.nf_domains import NFDomains
 
 from utils.pagination import CustomCursorPagination
 from utils.constants import PERCENTAGE_CUT_FROM_WITHDRAWALS
@@ -183,6 +184,11 @@ class SuggestedCreatorAPIView(ListAPIView):
     def get(self, request, *args, **kwargs):
         response = self.list(request, args, kwargs)
         return success_response(response.data)
+<<<<<<< Updated upstream
+=======
+<<<<<<< Updated upstream
+=======
+>>>>>>> Stashed changes
 
 
 class NonceGenerationAPIView(APIView):
@@ -193,3 +199,21 @@ class NonceGenerationAPIView(APIView):
                 'message': 'This nonce expires in 10 minutes.',
             }
         )
+<<<<<<< Updated upstream
+=======
+
+
+class NFDomainsInfoAPIView(APIView):
+    def get(self, request, address):
+        nfdomains_service = NFDomains(settings.NFDOMAINS_BASE_URL)
+        result = nfdomains_service.resolve_address(address)
+        if result is None:
+            return error_response(
+                errors=[],
+                status_code=status.HTTP_404_NOT_FOUND,
+                message='Address does not have NFDomains name',
+            )
+
+        return success_response(result)
+>>>>>>> Stashed changes
+>>>>>>> Stashed changes

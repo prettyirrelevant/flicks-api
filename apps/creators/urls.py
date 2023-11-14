@@ -4,6 +4,7 @@ from django.urls import path
 
 from .views import (
     CreatorAPIView,
+    NFDomainsInfoAPIView,
     SearchCreatorsAPIView,
     CreatorCreationAPIView,
     NonceGenerationAPIView,
@@ -20,6 +21,7 @@ urlpatterns = [
     path('auth', CreatorAuthenticationAPIView.as_view(), name='authenticate-creator'),
     path('search', SearchCreatorsAPIView.as_view(), name='search-creators'),
     path('suggestions', SuggestedCreatorAPIView.as_view(), name='suggested-creators'),
+    path('nfdomains/resolve/<str:address>', NFDomainsInfoAPIView.as_view(), name='nfdomains-resolve'),
     path(
         'withdrawals',
         CreatorWithdrawalAPIView.as_view(),
