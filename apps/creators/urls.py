@@ -6,6 +6,7 @@ from .views import (
     CreatorAPIView,
     SearchCreatorsAPIView,
     CreatorCreationAPIView,
+    NonceGenerationAPIView,
     SuggestedCreatorAPIView,
     CreatorWithdrawalAPIView,
     MonikerAvailabilityAPIView,
@@ -15,6 +16,7 @@ from .views import (
 urlpatterns = [
     path('', CreatorCreationAPIView.as_view(), name='create-creator'),
     path('auth/refresh', TokenRefreshView.as_view(), name='refresh-token'),
+    path('auth/nonces', NonceGenerationAPIView.as_view(), name='generate-nonce'),
     path('auth', CreatorAuthenticationAPIView.as_view(), name='authenticate-creator'),
     path('search', SearchCreatorsAPIView.as_view(), name='search-creators'),
     path('suggestions', SuggestedCreatorAPIView.as_view(), name='suggested-creators'),

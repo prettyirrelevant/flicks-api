@@ -21,10 +21,10 @@ from utils.pagination import CustomCursorPagination
 from utils.constants import PERCENTAGE_CUT_FROM_WITHDRAWALS
 from utils.responses import error_response, success_response
 
-from .models import Creator
 from .choices import Blockchain
 from .exceptions import BadGatewayError
 from .permissions import IsAuthenticated
+from .models import Creator, WalletAuthenticationRecord
 from .serializers import (
     CreatorSerializer,
     MinimalCreatorSerializer,
@@ -57,16 +57,7 @@ class CreatorAuthenticationAPIView(GenericAPIView):
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
 
-        try:
-            creator = self.get_queryset().get(address=serializer.validated_data['address'])
-        except Creator.DoesNotExist:
-            return error_response(
-                errors=[],
-                status_code=status.HTTP_401_UNAUTHORIZED,
-                message='Please provide a valid & registered creator address',
-            )
-
-        refresh = RefreshToken.for_user(creator)
+        refresh = RefreshToken.for_user(serializer.data)
         return success_response({'access_token': str(refresh.access_token), 'refresh_token': str(refresh)})
 
 
@@ -192,3 +183,13 @@ class SuggestedCreatorAPIView(ListAPIView):
     def get(self, request, *args, **kwargs):
         response = self.list(request, args, kwargs)
         return success_response(response.data)
+
+
+class NonceGenerationAPIView(APIView):
+    def get(self, request, *args, **kwargs):
+        return success_response(
+            {
+                'nonce': WalletAuthenticationRecord.generate_nonce(),
+                'message': 'This nonce expires in 10 minutes.',
+            }
+        )
