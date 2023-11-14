@@ -1,7 +1,5 @@
 import json
 import uuid
-import random
-import string
 import logging
 import datetime
 from decimal import Decimal
@@ -38,10 +36,6 @@ class ContentsTest(TestCase):
     )
     def create_creator(moniker: str, mock_post):  # noqa: ARG004
         _, address = generate_account()
-
-        def tx_hash_generator():
-            return ''.join(random.choices(string.ascii_uppercase + string.digits, k=52))  # noqa: S311
-
         return Creator.objects.create(
             address=address,
             moniker=moniker,
@@ -49,7 +43,6 @@ class ContentsTest(TestCase):
             image_url='https://google.com',
             banner_url='https://google.com',
             subscription_type=SubscriptionType.FREE,
-            spam_verification_tx=tx_hash_generator(),
         )
 
     def test_generate_presigned_url_without_credentials(self):
@@ -343,7 +336,6 @@ class ContentsTest(TestCase):
             banner_url='https://google.com',
             address=address,
             subscription_type=SubscriptionType.FREE,
-            spam_verification_tx='DDDFFFF',
             is_verified=True,
         )
         free_subscription = FreeSubscription.objects.get(creator=self.creator)
@@ -405,7 +397,6 @@ class ContentsTest(TestCase):
             banner_url='https://google.com',
             address=address,
             subscription_type=SubscriptionType.FREE,
-            spam_verification_tx='XDDFFF',
             is_verified=True,
         )
         self.client.post(

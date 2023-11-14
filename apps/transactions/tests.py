@@ -35,7 +35,6 @@ class TransactionsTest(TestCase):
             image_url='https://google.com',
             banner_url='https://google.com',
             subscription_type=SubscriptionType.FREE,
-            spam_verification_tx='VA37N6HU3QBSR7KL4BZIIM464NXRH3FWY7LH7PHLF6W5NHOCPXA',
         )
 
     @patch(
