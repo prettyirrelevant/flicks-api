@@ -77,7 +77,7 @@ class WalletAuthenticationRecord(UUIDModel, TimestampedModel, models.Model):
         if not nonce.startswith('FLICKS'):
             return False
 
-        parts = nonce[6:].split('-')
+        parts = nonce[7:].split(':')
         if len(parts) != 2:  # noqa: PLR2004
             return False
 
@@ -88,7 +88,7 @@ class WalletAuthenticationRecord(UUIDModel, TimestampedModel, models.Model):
         except Exception:  # noqa: BLE001
             return False
 
-        return nonce_hash == regenerated_hash and int(time.time() * 1000) - timestamp <= NONCE_DURATION
+        return nonce_hash == regenerated_hash and int(time.time() * 1000) - int(timestamp) <= NONCE_DURATION
 
 
 class Wallet(UUIDModel, TimestampedModel, models.Model):
