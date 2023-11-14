@@ -184,11 +184,6 @@ class SuggestedCreatorAPIView(ListAPIView):
     def get(self, request, *args, **kwargs):
         response = self.list(request, args, kwargs)
         return success_response(response.data)
-<<<<<<< Updated upstream
-=======
-<<<<<<< Updated upstream
-=======
->>>>>>> Stashed changes
 
 
 class NonceGenerationAPIView(APIView):
@@ -199,8 +194,6 @@ class NonceGenerationAPIView(APIView):
                 'message': 'This nonce expires in 10 minutes.',
             }
         )
-<<<<<<< Updated upstream
-=======
 
 
 class NFDomainsInfoAPIView(APIView):
@@ -215,5 +208,3 @@ class NFDomainsInfoAPIView(APIView):
             )
 
         return success_response(result)
->>>>>>> Stashed changes
->>>>>>> Stashed changes
