@@ -1,14 +1,17 @@
+import time
+import hashlib
 from decimal import Decimal
 from typing import ClassVar
 
 from algosdk.constants import ADDRESS_LEN
 
+from django.conf import settings
 from django.db import models, transaction
 from django.core.validators import MinLengthValidator
 
 from apps.subscriptions.choices import SubscriptionType
 
-from utils.constants import ZERO
+from utils.constants import ZERO, NONCE_DURATION
 from utils.models import UUIDModel, TimestampedModel
 
 from .choices import Blockchain
@@ -34,13 +37,6 @@ class Creator(UUIDModel, TimestampedModel, models.Model):
     is_suspended = models.BooleanField('is suspended', blank=True, default=False)
     suspension_reason = models.TextField('suspension reason', default='')
 
-    spam_verification_tx = models.CharField(
-        'spam verification transaction id',
-        max_length=200,
-        blank=False,
-        unique=True,
-    )
-
     subscription_type = models.CharField(
         'subscription type',
         null=False,
@@ -57,6 +53,42 @@ class Creator(UUIDModel, TimestampedModel, models.Model):
     @property
     def display_name(self) -> str:
         return self.moniker or self.address
+
+
+class WalletAuthenticationRecord(UUIDModel, TimestampedModel, models.Model):
+    creator = models.ForeignKey(
+        Creator,
+        null=True,
+        on_delete=models.SET_NULL,
+        related_name='wallet_authentication_records',
+    )
+    nonce = models.CharField('nonce', max_length=100, blank=False, unique=True)
+    transaction_reference = models.CharField('transaction reference', max_length=200, blank=False, unique=True)
+
+    @staticmethod
+    def generate_nonce() -> str:
+        timestamp = int(time.time() * 1000)
+        # this is totally fine for now
+        hash_digest = hashlib.sha256(f'{timestamp}:{settings.SECRET_KEY}'.encode()).hexdigest()
+        return f'FLICKS:{timestamp}:{hash_digest}'
+
+    @staticmethod
+    def validate_nonce(nonce: str) -> bool:
+        if not nonce.startswith('FLICKS'):
+            return False
+
+        parts = nonce[6:].split('-')
+        if len(parts) != 2:  # noqa: PLR2004
+            return False
+
+        timestamp, nonce_hash = parts
+
+        try:
+            regenerated_hash = hashlib.sha256(f'{timestamp}:{settings.SECRET_KEY}'.encode()).hexdigest()
+        except Exception:  # noqa: BLE001
+            return False
+
+        return nonce_hash == regenerated_hash and int(time.time() * 1000) - timestamp <= NONCE_DURATION
 
 
 class Wallet(UUIDModel, TimestampedModel, models.Model):
