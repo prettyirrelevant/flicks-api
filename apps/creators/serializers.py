@@ -1,5 +1,3 @@
-import base64
-
 from algosdk.constants import ADDRESS_LEN
 from algosdk.encoding import is_valid_address
 
@@ -12,7 +10,6 @@ from rest_framework import serializers
 from apps.subscriptions.models import SubscriptionDetail
 from apps.subscriptions.choices import SubscriptionType, SubscriptionDetailStatus
 
-from services.algorand import Algorand
 from services.nf_domains import NFDomains
 
 from .models import Wallet, Creator, WalletDepositAddress, WalletAuthenticationRecord
@@ -158,7 +155,6 @@ class CreatorCreationSerializer(serializers.Serializer):
 
 class CreatorAuthenticationSerializer(serializers.Serializer):
     nonce = serializers.CharField(max_length=100)
-    tx_hash = serializers.CharField(max_length=200)
     address = serializers.CharField(max_length=ADDRESS_LEN)
 
     def validate_address(self, value):
@@ -174,32 +170,33 @@ class CreatorAuthenticationSerializer(serializers.Serializer):
         return value
 
     def validate(self, attrs):
-        algorand_service = Algorand(
-            api_key=settings.PURESTAKE_API_KEY,
-            algod_url=settings.PURESTAKE_ALGOD_URL,
-            indexer_url=settings.PURESTAKE_INDEXER_URL,
-        )
-        tx_info = algorand_service.get_transaction(attrs['tx_hash'])
-        if tx_info is None:
-            raise serializers.ValidationError('Invalid transaction ID provided.')
-
-        if not (
-            tx_info['tx-type'] == 'pay'
-            and tx_info['sender'] == attrs['address']
-            and 'payment-transaction' in tx_info
-            and tx_info['payment-transaction']['receiver'] == settings.BURN_ADDRESS
-            and tx_info['payment-transaction']['amount'] == 0
-            and base64.b64decode(tx_info['note']).decode() == attrs['nonce']
-        ):
-            raise serializers.ValidationError('Invalid transaction ID provided')
+        # algorand_service = Algorand(
+        #     api_key=settings.PURESTAKE_API_KEY,
+        #     algod_url=settings.PURESTAKE_ALGOD_URL,
+        #     indexer_url=settings.PURESTAKE_INDEXER_URL,
+        # )
+        # tx_info = algorand_service.get_transaction(attrs['tx_hash'])
+        # if tx_info is None:
+        #     raise serializers.ValidationError('Invalid transaction ID provided.')
+        #
+        # if not (
+        #     tx_info['tx-type'] == 'pay'
+        #     and tx_info['sender'] == attrs['address']
+        #     and 'payment-transaction' in tx_info
+        #     and tx_info['payment-transaction']['receiver'] == settings.BURN_ADDRESS
+        #     and tx_info['payment-transaction']['amount'] == 0
+        #     and base64.b64decode(tx_info['note']).decode() == attrs['nonce']
+        # ):
+        #     raise serializers.ValidationError('Invalid transaction ID provided')
 
         try:
             creator = Creator.objects.get(address=attrs['address'])
         except Creator.DoesNotExist as e:
             raise serializers.ValidationError('Please try signing up and try again.') from e
 
-        return WalletAuthenticationRecord.objects.create(
-            creator=creator,
-            nonce=attrs['nonce'],
-            transaction_reference=attrs['tx_hash'],
-        )
+        return creator
+        # return WalletAuthenticationRecord.objects.create(
+        #     creator=creator,
+        #     nonce=attrs['nonce'],
+        #     transaction_reference=attrs['tx_hash'],
+        # )
